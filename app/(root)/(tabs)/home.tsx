@@ -105,7 +105,7 @@ export default function Home() {
                                 source={icons.person}
                                 className="w-8 h-8"
                                 resizeMode="contain"
-                                tintColor="#0286FF"
+                                tintColor="#242b4d"
                             />
                         </TouchableOpacity>
                     </View>
@@ -113,7 +113,7 @@ export default function Home() {
                     {/* Quick Actions */}
                     <View className="flex flex-row justify-between mt-8">
                         <TouchableOpacity
-                            className="bg-[#0286FF] rounded-2xl p-4 flex-1 mr-2"
+                            className="bg-primary-900 rounded-2xl p-4 flex-1 mr-2"
                             onPress={() => router.push("/(root)/attendance")}
                         >
                             <View className="bg-white/20 rounded-full p-2 w-12 h-12 items-center justify-center mb-2">
@@ -122,7 +122,7 @@ export default function Home() {
                             <Text className="text-white font-JakartaBold text-lg">Mark{"\n"}Attendance</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            className="bg-[#3B82F6] rounded-2xl p-4 flex-1 ml-2"
+                            className="bg-primary-900 rounded-2xl p-4 flex-1 ml-2"
                             onPress={() => router.push("/(root)/students")}
                         >
                             <View className="bg-white/20 rounded-full p-2 w-12 h-12 items-center justify-center mb-2">
@@ -134,7 +134,7 @@ export default function Home() {
 
                     {/* Payment Reminder */}
                     <TouchableOpacity
-                        className="bg-[#1D4ED8] rounded-2xl mt-6 p-4"
+                        className="bg-primary-900 rounded-2xl mt-6 p-4"
                         onPress={() => router.push("/(root)/payments")}
                     >
                         <View className="flex-row items-center justify-between">
@@ -153,7 +153,7 @@ export default function Home() {
                         <View className="flex flex-row justify-between items-center mb-4">
                             <Text className="text-xl text-primary-900 font-JakartaBold">Today's Trip</Text>
                             <TouchableOpacity>
-                                <Text className="text-primary-500 font-JakartaMedium">View All</Text>
+                                <Text className="text-primary-900 font-JakartaMedium">View All</Text>
                             </TouchableOpacity>
                         </View>
 
@@ -162,7 +162,7 @@ export default function Home() {
                             <View className="flex flex-row justify-between items-center">
                                 <View className="flex-1">
                                     <View className="flex flex-row items-center">
-                                        <View className="bg-primary-500 rounded-full p-2 mr-3">
+                                        <View className="bg-primary-900 rounded-full p-2 mr-3">
                                             <Image source={icons.school} className="w-5 h-5" tintColor="white"/>
                                         </View>
                                         <Text className="text-lg text-primary-900 font-JakartaBold">Trip to
@@ -173,7 +173,7 @@ export default function Home() {
                                         <Text className="text-secondary-500 font-JakartaMedium">5 Students</Text>
                                     </View>
                                 </View>
-                                <TouchableOpacity className="bg-primary-500 rounded-xl px-4 py-2">
+                                <TouchableOpacity className="bg-primary-900 rounded-xl px-4 py-2">
                                     <Text className="text-white font-JakartaBold">Start Trip</Text>
                                 </TouchableOpacity>
                             </View>

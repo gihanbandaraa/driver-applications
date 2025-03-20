@@ -2,7 +2,6 @@ import {View, Text, Image, Alert, ScrollView, TouchableOpacity, Pressable} from 
 import React, {useState} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import CustomButton from '@/components/CustomButton';
-
 import * as ImagePicker from 'expo-image-picker';
 import {icons, images} from '@/constants';
 import CustomModal from "@/components/CustomModal";

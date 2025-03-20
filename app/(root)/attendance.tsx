@@ -37,14 +37,12 @@ const AttendanceScreen = () => {
                 router.replace('/(auth)/sign-in');
                 return;
             }
-
             const today = new Date().toISOString().split('T')[0];
             const studentsResponse = await getStudents(driverId);
             const attendanceResponse = await getAttendance(driverId, today);
 
             if (studentsResponse.ok && studentsResponse.data) {
                 let studentsWithAttendance = studentsResponse.data;
-
                 if (attendanceResponse.ok && attendanceResponse.data) {
                     const attendanceMap = new Map<number, AttendanceRecord>(
                         attendanceResponse.data.map((record: any) => [
@@ -61,6 +59,7 @@ const AttendanceScreen = () => {
                     studentsWithAttendance = studentsResponse.data.map((student: Student) => {
                         const attendance = attendanceMap.get(student.id);
                         if (attendance) {
+                            // Log for debugging
                             return {
                                 ...student,
                                 attendanceStatus: selectedPeriod === 'MORNING'
@@ -78,7 +77,6 @@ const AttendanceScreen = () => {
                         };
                     });
                 }
-
                 setStudents(studentsWithAttendance);
             } else {
                 Alert.alert('Error', 'Unable to load student data');
@@ -132,7 +130,7 @@ const AttendanceScreen = () => {
                 setStudents(prevStudents =>
                     prevStudents.map(student =>
                         student.id === studentId
-                            ? { ...student, attendanceStatus, rideStatus }
+                            ? {...student, attendanceStatus, rideStatus}
                             : student
                     )
                 );
@@ -257,34 +255,42 @@ const AttendanceScreen = () => {
 
                             {/* Ride Status Buttons */}
                             {student.attendanceStatus === 'PRESENT' && (
-                                <View className="flex-row  space-x-4">
+                                <View style={{ flexDirection: 'row', gap: 16 }}>
                                     {[
                                         { value: 'PICKED_UP', icon: '🚌', label: 'Picked Up' },
                                         { value: 'DROPPED', icon: '🏫', label: 'Dropped' }
-                                    ].map(({value, icon, label}) => (
-                                        <TouchableOpacity
-                                            key={value}
-                                            disabled={loading}
-                                            onPress={() => handleAttendanceMark(
-                                                student.id,
-                                                'PRESENT',
-                                                value as RideStatus
-                                            )}
-                                            className={`flex-1 py-3.5 mx-2  rounded-xl border ${
-                                                student.rideStatus === value
-                                                    ? 'bg-primary-50 border-primary-200'
-                                                    : 'bg-white border-gray-200'
-                                            }`}
-                                        >
-                                            <Text className={`text-center font-JakartaMedium ${
-                                                student.rideStatus === value
-                                                    ? 'text-primary-900'
-                                                    : 'text-gray-700'
-                                            }`}>
-                                                {icon} {label}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    ))}
+                                    ].map(({value, icon, label}) => {
+                                        const isActive = student.rideStatus === value;
+
+                                        return (
+                                            <TouchableOpacity
+                                                key={value}
+                                                disabled={loading}
+                                                onPress={() => handleAttendanceMark(
+                                                    student.id,
+                                                    'PRESENT',
+                                                    value as RideStatus
+                                                )}
+                                                style={{
+                                                    flex: 1,
+                                                    paddingVertical: 14,
+                                                    marginHorizontal: 8,
+                                                    borderRadius: 12,
+                                                    borderWidth: 1,
+                                                    borderColor: isActive ? '#bfdbfe' : '#e5e7eb',
+                                                    backgroundColor: isActive ? '#eff6ff' : '#ffffff',
+                                                }}
+                                            >
+                                                <Text style={{
+                                                    textAlign: 'center',
+                                                    fontFamily: 'JakartaMedium',
+                                                    color: isActive ? '#1e3a8a' : '#4b5563',
+                                                }}>
+                                                    {icon} {label}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
                                 </View>
                             )}
                         </View>
