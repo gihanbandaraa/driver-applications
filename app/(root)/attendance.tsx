@@ -147,7 +147,7 @@ const AttendanceScreen = () => {
     return (
         <View className="flex-1 bg-gray-100">
             {/* Header */}
-            <View className="bg-primary-900 px-4 pt-12 pb-6">
+            <View className="bg-primary-900 px-4 pt-12 pb-6 rounded-b-3xl">
                 <View className="flex-row items-center justify-between mb-6">
                     <Text className="text-2xl font-JakartaBold text-white">
                         Attendance

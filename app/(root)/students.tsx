@@ -302,7 +302,7 @@ export default function Students() {
                         <View className="flex-row justify-between items-center mb-6">
                             <Text className="text-2xl font-JakartaBold text-primary-900">Add New Student</Text>
                             <TouchableOpacity onPress={() => setModalVisible(false)}>
-                                <Image source={icons.close} className="w-6 h-6" tintColor="#0286FF"/>
+                                <Image source={icons.close} className="w-6 h-6" tintColor="#242b4d"/>
                             </TouchableOpacity>
                         </View>
 
@@ -422,7 +422,7 @@ export default function Students() {
                             </View>
                             <TouchableOpacity
                                 onPress={handleSubmit}
-                                className="bg-[#0286FF] py-4 rounded-xl mt-4"
+                                className="bg-primary-900 py-4 rounded-xl mt-4"
                                 disabled={loading}
                             >
                                 {loading ? (

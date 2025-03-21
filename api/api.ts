@@ -310,3 +310,111 @@ export const getAttendance = async (driverId: string, date: string) => {
     }
 
 }
+
+export const getTripSummaries = async (driverId: string) => {
+    try {
+        const response = await fetch(`${HostName}/api/drivers/summaries/${driverId}`);
+        const data = await response.json();
+        if (response.ok) {
+            return {ok: true, data};
+        } else {
+            Alert.alert('Error', data.message || 'Something went wrong');
+            return {ok: false, data};
+        }
+    } catch (error) {
+        console.error('Network error:', error);
+        Alert.alert('Error', 'Network error');
+        return {ok: false, error};
+    }
+}
+
+export const getTripDetails = async (driverId: string, date: string) => {
+    try {
+        const response = await fetch(`${HostName}/api/drivers/details/${driverId}/${date}`);
+        const data = await response.json();
+        if (response.ok) {
+            return {ok: true, data};
+        } else {
+            Alert.alert('Error', data.message || 'Something went wrong');
+            return {ok: false, data};
+        }
+    } catch (error) {
+        console.error('Network error:', error);
+        Alert.alert('Error', 'Network error');
+        return {ok: false, error};
+    }
+}
+
+export const getPaymentDetails = async (driverId: string) => {
+    try {
+        const response = await fetch(`${HostName}/api/students/visualize-payments/${driverId}`);
+        const data = await response.json();
+        if (response.ok) {
+            return {ok: true, data};
+        } else {
+            Alert.alert('Error', data.message || 'Something went wrong');
+            return {ok: false, data};
+        }
+    } catch (error) {
+        console.error('Network error:', error);
+        Alert.alert('Error', 'Network error');
+        return {ok: false, error};
+    }
+
+}
+
+export const notifyAllDuePayments = async (driverId: string) => {
+    try {
+        const response = await fetch(`${HostName}/api/students/send-due-payment-emails/${driverId}`);
+        const data = await response.json();
+        if (response.ok) {
+            Alert.alert('Success', 'Notifications sent successfully');
+        } else {
+            Alert.alert('Error', data.message || 'Something went wrong');
+        }
+    } catch (error) {
+        console.error('Network error:', error);
+        Alert.alert('Error', 'Network error');
+    }
+}
+
+export const notifyDuePayments = async (driverId: string , studentId:string) => {
+    try {
+        const response = await fetch(`${HostName}/api/students/notify-specific-person/${driverId}/${studentId}`);
+        const data = await response.json();
+        if (response.ok) {
+            Alert.alert('Success', 'Notifications sent successfully');
+        } else {
+            Alert.alert('Error', data.message || 'Something went wrong');
+        }
+    } catch (error) {
+        console.error('Network error:', error);
+        Alert.alert('Error', 'Network error');
+    }
+
+}
+
+export const updatePaymentStatus = async ( studentId: string, status: string) => {
+    try {
+        const response = await fetch(`${HostName}/api/students/update-payment-status/${studentId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                status,
+            }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            Alert.alert('Success', 'Payment status updated successfully');
+        } else {
+            Alert.alert('Error', data.message || 'Something went wrong');
+        }
+    } catch (error) {
+        console.error('Network error:', error);
+        Alert.alert('Error', 'Network error');
+    }
+
+}

@@ -1,4 +1,4 @@
-import {View, Text, ScrollView} from 'react-native'
+import {View, Text, ScrollView, ActivityIndicator} from 'react-native'
 import React, {useEffect, useState} from 'react'
 import {SafeAreaView} from 'react-native-safe-area-context'
 import InputField from "@/components/InputField";
@@ -12,6 +12,7 @@ const GatherInformation = () => {
     const [isLoggedIn, setIsLoggedIn] = useState<string | null>(null);
     const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -61,22 +62,29 @@ const GatherInformation = () => {
             alert("Please enter a valid date of birth in the format DD/MM/YYYY");
             return;
         }
-
-        const userId = await AsyncStorage.getItem('userId') as string;
-
-        await addDriver(
-            userId,
-            fullName,
-            nic,
-            licenceNumber,
-            phoneNum,
-            address,
-            dob,
-            selfieUri,
-            nicUri,
-            licenseUri
-        )
+        try {
+            setSubmitting(true);
+            const userId = await AsyncStorage.getItem('userId') as string;
+            await addDriver(
+                userId,
+                fullName,
+                nic,
+                licenceNumber,
+                phoneNum,
+                address,
+                dob,
+                selfieUri,
+                nicUri,
+                licenseUri
+            )
+        } catch (error) {
+            console.error('Error submitting driver information:', error);
+            alert("Failed to submit information. Please try again.");
+        } finally {
+            setSubmitting(false);
+        }
     }
+
     return (
         <SafeAreaView className="flex-1 bg-white">
             <ScrollView className="flex-grow">
@@ -103,9 +111,20 @@ const GatherInformation = () => {
                         <InputField label={"Address"} placeholder={"Enter your address"}
                                     value={address} onChangeText={setAddress}/>
 
-                        <CustomButton title="Submit" onPress={handleSubmit}
-                                      className="mt-8 py-4 w-full"
-                        />
+                        <CustomButton
+                            title={submitting ? "Submitting..." : "Submit"}
+                            onPress={handleSubmit}
+                            className="mt-8 py-4 w-full"
+                            disabled={submitting}
+                        >
+                            {submitting && (
+                                <ActivityIndicator
+                                    size="small"
+                                    color="#ffffff"
+                                    style={{marginRight: 8}}
+                                />
+                            )}
+                        </CustomButton>
 
                     </View>
                 </View>
