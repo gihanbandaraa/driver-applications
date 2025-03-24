@@ -291,7 +291,7 @@ const Payments = () => {
                                     {/* Mark as paid button */}
                                     {isPending && (
                                         <TouchableOpacity
-                                            className="flex-1 bg-green-600 rounded-xl py-3 flex-row justify-center items-center"
+                                            className="flex-1 bg-green-600 rounded-xl py-3 mx-1 flex-row justify-center items-center"
                                             onPress={() => payment.id && handleMarkAsPaid(payment.id)}
                                             disabled={updatingPayment === payment.id}
                                         >
@@ -309,7 +309,7 @@ const Payments = () => {
                                     {/* Reminder button for overdue payments */}
                                     {(isPending && isOverdue) && (
                                         <TouchableOpacity
-                                            className="flex-1 bg-primary-800 rounded-xl py-3 flex-row justify-center items-center"
+                                            className="flex-1 bg-primary-800 rounded-xl mx-1 py-3 flex-row justify-center items-center"
                                             onPress={() => payment.id && sendPaymentReminder(payment.id, payment.student_name)}
                                             disabled={sendingReminder === payment.id}
                                         >

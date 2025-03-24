@@ -88,7 +88,9 @@ const GatherInformation = () => {
     return (
         <SafeAreaView className="flex-1 bg-white">
             <ScrollView className="flex-grow">
-                <View className="flex justify-center  mx-4 mt-10">
+                <View className="flex justify-center  mx-4 mt-10" style={{
+                    marginBottom: 12,
+                }}>
                     <Text className="text-4xl font-JakartaExtraBold text-blue-500">Verify Your Identity</Text>
                     <Text className="text-lg font-JakartaLight mt-4">Enter the required details to complete your
                         verification securely.</Text>

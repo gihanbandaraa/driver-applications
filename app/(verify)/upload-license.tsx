@@ -14,7 +14,6 @@ const UploadLicense = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const {drivingLicense, setDrivingLicense} = useUpload();
 
-    
 
     const pickImage = async () => {
         try {
@@ -63,7 +62,9 @@ const UploadLicense = () => {
     return (
         <SafeAreaView className="flex-1 bg-white">
             <ScrollView className="flex-grow">
-                <View className="flex justify-center mt-8">
+                <View className="flex justify-center mt-8" style={{
+                    marginBottom: 8,
+                }}>
 
                     <View className="flex mx-4 mt-8 justify-center">
                         <Text className="text-4xl font-JakartaExtraBold" style={{lineHeight: 50}}>

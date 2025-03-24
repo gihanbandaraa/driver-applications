@@ -1,11 +1,11 @@
 import {View, Text, ScrollView, Alert} from 'react-native'
-import React, { useState } from 'react'
+import React, {useState} from 'react'
 import InputField from '@/components/InputField'
 import CustomButton from '@/components/CustomButton'
-import { icons } from '@/constants'
-import { Link } from 'expo-router'
+import {icons} from '@/constants'
+import {Link} from 'expo-router'
 import OAuth from "@/components/OAuth"
-import { signIn,signOut } from "@/api/api"
+import {signIn, signOut} from "@/api/api"
 
 
 const SignIn = () => {
@@ -51,10 +51,10 @@ const SignIn = () => {
                         secureTextEntry={true}
                         onChangeText={(value) => setForm({...form, password: value})}
                     />
-                    <CustomButton title="Sign In" className='py-4 mt-8' onPress={handleSignIn} />
+                    <CustomButton title="Sign In" className='py-4 mt-8' onPress={handleSignIn}/>
                 </View>
             </View>
-            <OAuth />
+            <OAuth/>
             <Link href="/sign-up" className="text-lg text-center text-general-200 mt-10">
                 <Text>Don't have an account?{" "}</Text>
                 <Text className="text-primary-500">Sign Up</Text>

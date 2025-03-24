@@ -36,7 +36,6 @@ export const addUser = async (name: string, email: string, password: string, goo
 export const signIn = async (email: string, password: string) => {
 
     try {
-        console.log(HostName)
         const response = await fetch(`${HostName}/api/users/sign-in`, {
             method: 'POST',
             headers: {
@@ -65,7 +64,7 @@ export const signIn = async (email: string, password: string) => {
                 }
             ]);
         } else {
-            Alert.alert('Error', data.message || 'Something went wrong');
+            Alert.alert('Error', data.error || 'Something went wrong');
         }
     } catch (error) {
         console.error(error);
