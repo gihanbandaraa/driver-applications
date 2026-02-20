@@ -1,9 +1,21 @@
 import React from 'react';
-import {View, Text, ScrollView, Image, TouchableOpacity} from 'react-native';
+import {Text, ScrollView, Image, TouchableOpacity} from 'react-native';
 import {useState, useEffect} from 'react';
 import {SafeAreaView} from "react-native-safe-area-context";
 import {useNavigation} from '@react-navigation/native';
-import MapView, {Marker} from 'react-native-maps';
+import { Platform, View } from 'react-native';
+let MapView: any;
+let Marker: any;
+if (Platform.OS !== 'web') {
+    // load native-only module at runtime on native platforms
+    const maps = require('react-native-maps');
+    MapView = maps.default ?? maps.MapView ?? maps;
+    Marker = maps.Marker ?? (maps.default && maps.default.Marker);
+} else {
+    // simple web fallback component to avoid bundling native code for web
+    MapView = (props: any) => <View {...props} />;
+    Marker = (props: any) => <View {...props} />;
+}
 import {icons} from "@/constants";
 import {router} from "expo-router";
 import * as Location from 'expo-location';

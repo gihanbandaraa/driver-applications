@@ -1,10 +1,20 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, ScrollView, TouchableOpacity, Modal, Image, TextInput, ActivityIndicator} from 'react-native';
+import { Text, ScrollView, TouchableOpacity, Modal, Image, TextInput, ActivityIndicator} from 'react-native';
 import {SafeAreaView} from "react-native-safe-area-context";
 import {icons} from "@/constants";
 import {router} from "expo-router";
 import InputField from "@/components/InputField";
-import MapView, {Marker} from 'react-native-maps';
+import { Platform, View } from 'react-native';
+let MapView: any;
+let Marker: any;
+if (Platform.OS !== 'web') {
+    const maps = require('react-native-maps');
+    MapView = maps.default ?? maps.MapView ?? maps;
+    Marker = maps.Marker ?? (maps.default && maps.default.Marker);
+} else {
+    MapView = (props: any) => <View {...props} />;
+    Marker = (props: any) => <View {...props} />;
+}
 import * as Location from 'expo-location';
 import {addStudent, getStudents} from "@/api/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -239,54 +249,71 @@ export default function Students() {
                     </View>
 
                     {/* Student List */}
-                    {studentData.map((student) => (
-                        <TouchableOpacity
-                            key={student.id}
-                            className="bg-white rounded-2xl p-5 mb-4 shadow-md border border-gray-100"
-                            onPress={() => router.push({
-                                pathname: '/(root)/student-details',
-                                params: { studentId: student.id }
-                            })}
-                        >
-                            <View className="flex-row items-center justify-between">
-                                <View className="flex-row items-center flex-1">
-                                    <View className="w-14 h-14 rounded-2xl bg-primary-900/5 items-center justify-center mr-4 border border-primary-900/10">
-                                        <Text className="text-primary-900 font-JakartaBold text-2xl">
-                                            {student.full_name.charAt(0).toUpperCase()}
-                                        </Text>
-                                    </View>
-                                    <View className="flex-1 mr-4">
-                                        <Text className="text-lg text-gray-900 font-JakartaBold mb-1">
-                                            {student.full_name}
-                                        </Text>
-                                        <View className="flex-row items-center">
-                                            <View className="bg-primary-900/5 px-3 py-1 rounded-full mr-2">
-                                                <Text className="text-primary-900 font-JakartaMedium text-sm">
-                                                    Grade {student.grade}
-                                                </Text>
-                                            </View>
-                                            <Text className="text-gray-500 font-JakartaMedium text-sm">
-                                                {student.school}
+                    {studentData.length > 0 ? (
+                        studentData.map((student) => (
+                            <TouchableOpacity
+                                key={student.id}
+                                className="bg-white rounded-2xl p-5 mb-4 shadow-md border border-gray-100"
+                                onPress={() => router.push({
+                                    pathname: '/(root)/student-details',
+                                    params: {studentId: student.id}
+                                })}
+                            >
+                                <View className="flex-row items-center justify-between">
+                                    <View className="flex-row items-center flex-1">
+                                        <View
+                                            className="w-14 h-14 rounded-2xl bg-primary-900/5 items-center justify-center mr-4 border border-primary-900/10">
+                                            <Text className="text-primary-900 font-JakartaBold text-2xl">
+                                                {student.full_name.charAt(0).toUpperCase()}
                                             </Text>
                                         </View>
+                                        <View className="flex-1 mr-4">
+                                            <Text className="text-lg text-gray-900 font-JakartaBold mb-1">
+                                                {student.full_name}
+                                            </Text>
+                                            <View className="flex-row items-center">
+                                                <View className="bg-primary-900/5 px-3 py-1 rounded-full mr-2">
+                                                    <Text className="text-primary-900 font-JakartaMedium text-sm">
+                                                        Grade {student.grade}
+                                                    </Text>
+                                                </View>
+                                                <Text className="text-gray-500 font-JakartaMedium text-sm">
+                                                    {student.school}
+                                                </Text>
+                                            </View>
+                                        </View>
                                     </View>
+                                    <TouchableOpacity
+                                        className="bg-red-50 p-3.5 rounded-xl border border-red-100"
+                                        onPress={() => {
+                                            const phoneNumber = student.phone;
+                                            Linking.openURL(`tel:${phoneNumber}`);
+                                        }}
+                                    >
+                                        <Image
+                                            source={icons.phone}
+                                            className="w-5 h-5"
+                                            tintColor="#EF4444"
+                                        />
+                                    </TouchableOpacity>
                                 </View>
-                                <TouchableOpacity
-                                    className="bg-red-50 p-3.5 rounded-xl border border-red-100"
-                                    onPress={() => {
-                                        const phoneNumber = student.phone;
-                                        Linking.openURL(`tel:${phoneNumber}`);
-                                    }}
-                                >
-                                    <Image
-                                        source={icons.phone}
-                                        className="w-5 h-5"
-                                        tintColor="#EF4444"
-                                    />
-                                </TouchableOpacity>
-                            </View>
-                        </TouchableOpacity>
-                    ))}
+                            </TouchableOpacity>
+                        ))
+                    ) : (
+                        <View className="flex-1 items-center justify-center py-20 ">
+                            <Image
+                                source={icons.noData}
+                                className="w-24 h-24 mb-4 opacity-50"
+                                tintColor="#CCCCCC"
+                            />
+                            <Text className="text-lg font-JakartaBold text-gray-400 mb-2">
+                                No Students Found
+                            </Text>
+                            <Text className="text-sm font-JakartaMedium text-gray-400 text-center max-w-xs mb-6">
+                                Add your first student by tapping the plus button above
+                            </Text>
+                        </View>
+                    )}
                 </View>
             </ScrollView>
 

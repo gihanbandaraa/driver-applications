@@ -222,7 +222,7 @@ const Profile = () => {
 
                             <TouchableOpacity
                                 onPress={() => setShowLogoutConfirm(false)}
-                                className="bg-gray-100 rounded-xl py-3.5 items-center"
+                                className="bg-gray-100 rounded-xl py-3.5 mt-4 items-center"
                             >
                                 <Text className="text-gray-700 font-JakartaBold">Cancel</Text>
                             </TouchableOpacity>
@@ -235,7 +235,7 @@ const Profile = () => {
 };
 
 const ProfileItem = ({label, value, icon}: { label: string, value: string, icon: JSX.Element }) => (
-    <View className="flex-row items-center">
+    <View className="flex-row items-center mt-2">
         <View className="bg-gray-100 p-2.5 rounded-xl">
             {icon}
         </View>

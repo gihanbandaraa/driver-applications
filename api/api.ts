@@ -154,7 +154,7 @@ export const addDriver = async (
                 {text: 'OK', onPress: () => router.replace('/(pending)/pending-verification')}
             ]);
         } else {
-            Alert.alert('Error', data.message || 'Something went wrong');
+            Alert.alert('Error', data.error || 'Something went wrong');
         }
     } catch (error) {
         console.error(error);
@@ -308,6 +308,24 @@ export const getAttendance = async (driverId: string, date: string) => {
         return {ok: false, error};
     }
 
+}
+
+export const deleteStudent = async (studentId: string) => {
+    try {
+        const response = await fetch(`${HostName}/api/students/delete-student/${studentId}`, {
+            method: 'DELETE',
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            Alert.alert('Success', 'Student deleted successfully');
+        } else {
+            Alert.alert('Error', data.message || 'Something went wrong');
+        }
+    } catch (error) {
+        console.error('Network error:', error);
+        Alert.alert('Error', 'Network error');
+    }
 }
 
 export const getTripSummaries = async (driverId: string) => {

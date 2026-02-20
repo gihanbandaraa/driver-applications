@@ -42,6 +42,7 @@ import back from "@/assets/icons/back.png";
 import location from "@/assets/icons/location.png";
 import phone from "@/assets/icons/phone.png";
 import layers from "@/assets/icons/layer.png";
+import noData from "@/assets/icons/noData.png";
 
 
 export const images = {
@@ -91,7 +92,8 @@ export const icons = {
     back,
     location,
     phone,
-    layers
+    layers,
+    noData
 };
 
 export const onboarding = [

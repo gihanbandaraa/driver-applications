@@ -1,5 +1,5 @@
 import React, {useState, useCallback} from 'react';
-import {View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput} from 'react-native';
+import {View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput, Image} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {getStudents} from '@/api/api';
 import {Student} from "@/types/student";
@@ -7,6 +7,7 @@ import {useRouter} from 'expo-router';
 import {AttendanceStatus, RideStatus, Period} from '@/types/attendance';
 import {useFocusEffect} from '@react-navigation/native';
 import {markAttendance, getAttendance} from "@/api/api";
+import {icons} from "@/constants";
 
 interface AttendanceRecord {
     morning_attendance_status: AttendanceStatus;
@@ -21,6 +22,10 @@ const AttendanceScreen = () => {
     const [period, setPeriod] = useState<Period>('MORNING');
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+
+    const [updatingStudentId, setUpdatingStudentId] = useState<number | null>(null);
+    const [updatingAction, setUpdatingAction] = useState<'attendance' | 'ride' | null>(null);
+
 
     const filteredStudents = students.filter(student =>
         student.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -108,7 +113,10 @@ const AttendanceScreen = () => {
     ) => {
         if (loading) return;
 
-        setLoading(true);
+        setUpdatingStudentId(studentId);
+        setUpdatingAction(rideStatus ? 'ride' : 'attendance');
+
+
         try {
             const driverId = await AsyncStorage.getItem('userId');
             if (!driverId) {
@@ -140,7 +148,8 @@ const AttendanceScreen = () => {
         } catch (error) {
             Alert.alert('Error', (error as Error).message || 'Failed to update attendance');
         } finally {
-            setLoading(false);
+            setUpdatingStudentId(null);
+            setUpdatingAction(null);
         }
     };
 
@@ -198,105 +207,156 @@ const AttendanceScreen = () => {
                 </View>
             ) : (
                 <ScrollView className="flex-1 px-4 pt-4">
-                    {filteredStudents.map((student) => (
-                        <View key={student.id}
-                              className="bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-100">
-                            <View className="flex-row items-center justify-between mb-4">
-                                <View>
-                                    <Text className="text-lg font-JakartaBold text-gray-900">
-                                        {student.full_name}
-                                    </Text>
-                                    <Text className="text-sm font-JakartaMedium text-gray-500">
-                                        {student.grade} Grade • {student.school}
-                                    </Text>
-                                </View>
-                                <View className={`px-3 py-1 rounded-full ${
-                                    student.attendanceStatus === 'PRESENT'
-                                        ? 'bg-green-100'
-                                        : student.attendanceStatus === 'ABSENT'
-                                            ? 'bg-red-100'
-                                            : 'bg-gray-100'
-                                }`}>
-                                    <Text className={`text-sm font-JakartaMedium ${
-                                        student.attendanceStatus === 'PRESENT'
-                                            ? 'text-green-700'
-                                            : student.attendanceStatus === 'ABSENT'
-                                                ? 'text-red-700'
-                                                : 'text-gray-700'
-                                    }`}>
-                                        {student.attendanceStatus || 'Not Marked'}
-                                    </Text>
-                                </View>
-                            </View>
-
-                            {/* Attendance Buttons */}
-                            <View className="flex-row space-x-4 mb-4">
-                                {['PRESENT', 'ABSENT'].map((status) => (
-                                    <TouchableOpacity
-                                        key={status}
-                                        onPress={() => handleAttendanceMark(student.id, status as AttendanceStatus)}
-                                        disabled={loading}
-                                        className={`flex-1 py-3.5 mx-2 rounded-xl border ${
-                                            student.attendanceStatus === status
-                                                ? 'bg-primary-900 border-primary-900'
-                                                : 'bg-white border-gray-200'
-                                        }`}
-                                    >
-                                        <Text className={`text-center font-JakartaMedium ${
-                                            student.attendanceStatus === status
-                                                ? 'text-white'
-                                                : 'text-gray-700'
-                                        }`}>
-                                            {status === 'PRESENT' ? '✓ Present' : '⨯ Absent'}
+                    {filteredStudents.length > 0 ? (
+                        filteredStudents.map((student) => (
+                            <View key={student.id}
+                                  className="bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-100">
+                                <View className="flex-row items-center justify-between mb-4">
+                                    <View>
+                                        <Text className="text-lg font-JakartaBold text-gray-900">
+                                            {student.full_name}
                                         </Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
+                                        <Text className="text-sm font-JakartaMedium text-gray-500">
+                                            {student.grade} Grade • {student.school}
+                                        </Text>
+                                    </View>
+                                    <View className={`px-3 py-1 rounded-full ${
+                                        student.attendanceStatus === 'PRESENT'
+                                            ? 'bg-green-100'
+                                            : student.attendanceStatus === 'ABSENT'
+                                                ? 'bg-red-100'
+                                                : 'bg-gray-100'
+                                    }`}>
+                                        <Text className={`text-sm font-JakartaMedium ${
+                                            student.attendanceStatus === 'PRESENT'
+                                                ? 'text-green-700'
+                                                : student.attendanceStatus === 'ABSENT'
+                                                    ? 'text-red-700'
+                                                    : 'text-gray-700'
+                                        }`}>
+                                            {student.attendanceStatus || 'Not Marked'}
+                                        </Text>
+                                    </View>
+                                </View>
 
-                            {/* Ride Status Buttons */}
-                            {student.attendanceStatus === 'PRESENT' && (
-                                <View style={{ flexDirection: 'row', gap: 16 }}>
-                                    {[
-                                        { value: 'PICKED_UP', icon: '🚌', label: 'Picked Up' },
-                                        { value: 'DROPPED', icon: '🏫', label: 'Dropped' }
-                                    ].map(({value, icon, label}) => {
-                                        const isActive = student.rideStatus === value;
+                                {/* Attendance Buttons */}
+                                <View className="flex-row space-x-4 mb-4">
+                                    {['PRESENT', 'ABSENT'].map((status) => {
+                                        const isUpdating = updatingStudentId === student.id &&
+                                            updatingAction === 'attendance';
+                                        const isActive = student.attendanceStatus === status;
+                                        const isThisButtonUpdating = isUpdating && status === (student.attendanceStatus || '');
 
                                         return (
                                             <TouchableOpacity
-                                                key={value}
-                                                disabled={loading}
-                                                onPress={() => handleAttendanceMark(
-                                                    student.id,
-                                                    'PRESENT',
-                                                    value as RideStatus
-                                                )}
-                                                style={{
-                                                    flex: 1,
-                                                    paddingVertical: 14,
-                                                    marginHorizontal: 8,
-                                                    borderRadius: 12,
-                                                    borderWidth: 1,
-                                                    borderColor: isActive ? '#bfdbfe' : '#e5e7eb',
-                                                    backgroundColor: isActive ? '#eff6ff' : '#ffffff',
-                                                }}
+                                                key={status}
+                                                onPress={() => handleAttendanceMark(student.id, status as AttendanceStatus)}
+                                                disabled={isUpdating ||
+                                                    (student.attendanceStatus !== undefined &&
+                                                        student.attendanceStatus !== status)}
+                                                className={`flex-1 py-3.5 mx-2 rounded-xl border ${
+                                                    isActive
+                                                        ? 'bg-primary-900 border-primary-900'
+                                                        : student.attendanceStatus !== undefined && student.attendanceStatus !== status
+                                                            ? 'bg-gray-100 border-gray-200'
+                                                            : 'bg-white border-gray-200'
+                                                }`}
                                             >
-                                                <Text style={{
-                                                    textAlign: 'center',
-                                                    fontFamily: 'JakartaMedium',
-                                                    color: isActive ? '#1e3a8a' : '#4b5563',
-                                                }}>
-                                                    {icon} {label}
-                                                </Text>
+                                                {isUpdating ? (
+                                                    <View className="flex-row justify-center items-center">
+                                                        <ActivityIndicator size="small" color={isActive ? "#FFFFFF" : "#1D4ED8"} />
+                                                    </View>
+                                                ) : (
+                                                    <Text className={`text-center font-JakartaMedium ${
+                                                        isActive
+                                                            ? 'text-white'
+                                                            : student.attendanceStatus !== undefined && student.attendanceStatus !== status
+                                                                ? 'text-gray-400' // disabled text color
+                                                                : 'text-gray-700'
+                                                    }`}>
+                                                        {status === 'PRESENT' ? '✓ Present' : '⨯ Absent'}
+                                                    </Text>
+                                                )}
                                             </TouchableOpacity>
                                         );
                                     })}
                                 </View>
+
+                                {/* Ride Status Buttons */}
+                                {student.attendanceStatus === 'PRESENT' && (
+                                    <View style={{flexDirection: 'row', gap: 16}}>
+                                        {[
+                                            {value: 'PICKED_UP', icon: '🚌', label: 'Picked Up'},
+                                            {value: 'DROPPED', icon: '🏫', label: 'Dropped'}
+                                        ].map(({value, icon, label}) => {
+                                            const isActive = student.rideStatus === value;
+                                            const isDisabled = (value === 'PICKED_UP' && student.rideStatus === 'DROPPED');
+                                            const isUpdating = updatingStudentId === student.id && updatingAction === 'ride';
+
+                                            return (
+                                                <TouchableOpacity
+                                                    key={value}
+                                                    disabled={isUpdating || isDisabled}
+                                                    onPress={() => handleAttendanceMark(
+                                                        student.id,
+                                                        'PRESENT',
+                                                        value as RideStatus
+                                                    )}
+                                                    style={{
+                                                        flex: 1,
+                                                        paddingVertical: 14,
+                                                        marginHorizontal: 8,
+                                                        borderRadius: 12,
+                                                        borderWidth: 1,
+                                                        borderColor: isActive ? '#bfdbfe' : isDisabled ? '#e5e7eb' : '#e5e7eb',
+                                                        backgroundColor: isActive ? '#eff6ff' : isDisabled ? '#f3f4f6' : '#ffffff',
+                                                        opacity: isDisabled ? 0.6 : 1,
+                                                    }}
+                                                >
+                                                    {isUpdating ? (
+                                                        <View style={{alignItems: 'center'}}>
+                                                            <ActivityIndicator size="small" color={isActive ? '#1e3a8a' : '#4b5563'} />
+                                                        </View>
+                                                    ) : (
+                                                        <Text style={{
+                                                            textAlign: 'center',
+                                                            fontFamily: 'JakartaMedium',
+                                                            color: isActive ? '#1e3a8a' : isDisabled ? '#9ca3af' : '#4b5563',
+                                                        }}>
+                                                            {icon} {label}
+                                                        </Text>
+                                                    )}
+                                                </TouchableOpacity>
+                                            );
+                                        })}
+                                    </View>
+                                )}
+                            </View>
+                        ))
+                    ) : (
+                        <View className="flex-1 items-center justify-center py-20">
+                            <Image
+                                source={icons.noData}
+                                className="w-24 h-24 mb-4 opacity-50"
+                                tintColor="#CCCCCC"
+                            />
+                            <Text className="text-lg font-JakartaBold text-gray-400 mb-2">
+                                No Students Found
+                            </Text>
+                            {searchQuery ? (
+                                <Text className="text-sm font-JakartaMedium text-gray-400 text-center max-w-xs mb-6">
+                                    No results match your search criteria
+                                </Text>
+                            ) : (
+                                <Text className="text-sm font-JakartaMedium text-gray-400 text-center max-w-xs mb-6">
+                                    You don't have any students assigned yet
+                                </Text>
                             )}
                         </View>
-                    ))}
+                    )}
                 </ScrollView>
             )}
+
         </View>
     );
 };

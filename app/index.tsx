@@ -38,7 +38,7 @@ const Home = () => {
         if (verificationStatus === 'not_verified') {
             return <Redirect href="/(verify)/verifying-home"/>;
         }
-        if (verificationStatus === 'pending') {
+        if (verificationStatus === 'pending' || verificationStatus === 'auto_approved' || verificationStatus === 'auto_disapproved') {
             return <Redirect href="/(pending)/pending-verification"/>;
         }
         if (verificationStatus === 'verified') {
