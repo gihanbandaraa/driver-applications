@@ -1,13 +1,11 @@
-import {View, Text, Image, Alert, ScrollView, TouchableOpacity, Pressable} from 'react-native';
+﻿import {View, Text, Image, Alert, ScrollView, TouchableOpacity} from 'react-native';
 import React, {useState} from 'react';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import CustomButton from '@/components/CustomButton';
-
 import * as ImagePicker from 'expo-image-picker';
 import {images} from '@/constants';
-import CustomModal from "@/components/CustomModal";
-import {useUpload} from "@/context/UploadContext";
-import {router} from "expo-router";
+import CustomModal from '@/components/CustomModal';
+import {useUpload} from '@/context/UploadContext';
+import {router} from 'expo-router';
+import {Ionicons} from '@expo/vector-icons';
 
 const UploadSelfie = () => {
     const [modalVisible, setModalVisible] = useState(false);
@@ -57,125 +55,104 @@ const UploadSelfie = () => {
         }
     };
     return (
-        <SafeAreaView className="flex-1 bg-white">
-            <ScrollView className="flex-grow">
-                <View className="flex justify-center mt-8" style={{
-                    marginBottom: 8,
-                }}>
-
-                    <View className="flex mx-4 mt-8 justify-center">
-                        <Text className="text-4xl font-JakartaExtraBold" style={{lineHeight: 50}}>
-                            Upload a photo of your Self (Selfie)
-                        </Text>
-                        <Text className="text-lg mt-8 font-JakartaLight">
-                            Regulations require you to upload a selfie.
-                            Don't worry, your data will stay safe and private.
-                        </Text>
+        <View style={{flex: 1, backgroundColor: '#f1f5f9'}}>
+            {/* Navy Header */}
+            <View style={{backgroundColor: '#242b4d', paddingTop: 56, paddingBottom: 24, paddingHorizontal: 20}}>
+                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12}}>
+                    <TouchableOpacity
+                        onPress={() => router.back()}
+                        style={{backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, width: 40, height: 40, alignItems: 'center', justifyContent: 'center'}}
+                    >
+                        <Ionicons name="chevron-back" size={22} color="white" />
+                    </TouchableOpacity>
+                    <View style={{flexDirection: 'row', gap: 6}}>
+                        {[1,2,3].map(n => (
+                            <View key={n} style={{width: n === 3 ? 28 : 8, height: 8, borderRadius: 4, backgroundColor: 'white'}} />
+                        ))}
                     </View>
-
-                    <View className="flex items-center justify-center mt-8">
-                        <TouchableOpacity
-                            onPress={pickImage}
-                            style={{
-                                width: '90%',
-                                maxWidth: 350,
-                                borderRadius: 20,
-                                height: 300,
-
-                            }}
-                            className="w-full aspect-[3/2] bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center mb-4"
-                        >
-                            {selfie ? (
-                                <Image
-                                    source={{uri: selfie}}
-                                    style={{
-                                        width: '100%',
-                                        height: '70%'
-                                    }}
-                                    className="rounded-lg"
-                                    resizeMode="contain"
-                                />
-                            ) : (
-                                <View className="flex items-center justify-center p-4">
-                                    <Image
-                                        source={images.upload}
-                                        className="w-16 h-16 mb-2"
-                                        resizeMode="contain"
-                                    />
-                                    <Text className="text-gray-500 text-center mt-4">
-                                        Tap to upload a photo of your Selfie
-                                    </Text>
-                                </View>
-                            )}
-                        </TouchableOpacity>
-                        <Pressable className='my-4' onPress={() => setModalVisible(true)}>
-                            <Text className="text-blue-500 font-JakartaBold">View Sample</Text>
-                        </Pressable>
-
-                        <CustomModal
-                            visible={modalVisible}
-                            onClose={() => setModalVisible(false)}
-                            title="Sample Driving License"
-                            image={images.sample_selfie}
-                            content="To upload a good image, ensure you have proper lighting to avoid shadows and glare. Make sure the entire Face is visible without any cropping, and hold the camera steady to prevent blurriness. Use a plain background for better clarity, and upload a high-quality image without reflections or any damage."
-                        />
-
-                    </View>
-                    <View className="flex flex-row justify-center items-center gap-x-3">
-                        <View className="flex-1 h-[1px] bg-general-100"/>
-                        <Text className="text-lg font-JakartaBold">Or</Text>
-                        <View className="flex-1 h-[1px] bg-general-100"/>
-                    </View>
-
-                    <CustomButton
-                        title="Open Camera & Take Photo"
-                        onPress={openCamera}
-                        className="mt-8 py-4"
-                        bgVariant='outline'
-                        textVariant='outline'
-                    />
-
-                    {selfie && (
-                        <CustomButton
-                            title="Reset"
-                            onPress={resetImage}
-                            bgVariant='danger'
-                            className="py-3 mt-3"
-                        />
-                    )}
-                    <CustomButton
-                        title="Continue"
-                        onPress={() => {
-                            if (!selfie) {
-                                Alert.alert(
-                                    "Image Required",
-                                    "Please upload a photo of your Selfie to continue.",
-                                    [
-                                        {
-                                            text: "Upload Now",
-                                            onPress: pickImage,
-                                            style: "default",
-                                        },
-                                        {
-                                            text: "Take Photo",
-                                            onPress: openCamera,
-                                        },
-                                        {
-                                            text: "Cancel",
-                                            style: "cancel",
-                                        },
-                                    ]
-                                );
-                                return;
-                            }
-                            router.push('/gather-information');
-                        }}
-                        className="mt-6 py-4"
-                    />
+                    <View style={{width: 40}} />
                 </View>
+                <Text className="text-white font-JakartaExtraBold text-xl">Selfie Photo</Text>
+                <Text className="text-white/60 font-JakartaMedium text-sm mt-1">Step 3 of 3 â€” Take or upload a clear photo of yourself</Text>
+            </View>
 
+            <ScrollView
+                style={{flex: 1}}
+                contentContainerStyle={{padding: 20, paddingBottom: 40}}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Upload Zone */}
+                <TouchableOpacity
+                    onPress={pickImage}
+                    activeOpacity={0.8}
+                    style={{
+                        backgroundColor: 'white', borderRadius: 20, height: 260,
+                        alignItems: 'center', justifyContent: 'center',
+                        borderWidth: 2, borderStyle: 'dashed', borderColor: selfie ? '#242b4d' : '#d1d5db',
+                        shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+                        marginBottom: 14,
+                    }}
+                >
+                    {selfie ? (
+                        <Image source={{uri: selfie}} style={{width: '100%', height: '100%', borderRadius: 18}} resizeMode="contain" />
+                    ) : (
+                        <View style={{alignItems: 'center'}}>
+                            <View style={{width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(36,43,77,0.07)', alignItems: 'center', justifyContent: 'center', marginBottom: 12}}>
+                                <Ionicons name="person-outline" size={40} color="#242b4d" />
+                            </View>
+                            <Text className="font-JakartaBold text-gray-700">Tap to upload selfie</Text>
+                            <Text className="font-JakartaMedium text-gray-400 text-xs mt-1">Face must be clearly visible</Text>
+                        </View>
+                    )}
+                </TouchableOpacity>
+
+                {/* Actions */}
+                <TouchableOpacity
+                    onPress={openCamera}
+                    style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', borderRadius: 14, paddingVertical: 14, borderWidth: 1.5, borderColor: '#e2e8f0', marginBottom: 10}}
+                >
+                    <Ionicons name="camera-outline" size={20} color="#242b4d" />
+                    <Text className="ml-2 font-JakartaBold text-gray-700">Open Camera</Text>
+                </TouchableOpacity>
+
+                {selfie && (
+                    <TouchableOpacity
+                        onPress={resetImage}
+                        style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fef2f2', borderRadius: 14, paddingVertical: 14, marginBottom: 10}}
+                    >
+                        <Ionicons name="trash-outline" size={18} color="#ef4444" />
+                        <Text className="ml-2 font-JakartaBold text-red-500">Remove Photo</Text>
+                    </TouchableOpacity>
+                )}
+
+                <TouchableOpacity onPress={() => setModalVisible(true)} style={{alignItems: 'center', marginBottom: 24}}>
+                    <Text className="font-JakartaMedium text-primary-900 text-sm underline">View Sample Image</Text>
+                </TouchableOpacity>
+
+                {/* Continue */}
+                <TouchableOpacity
+                    onPress={() => {
+                        if (!selfie) {
+                            Alert.alert('Image Required', 'Please upload or take a selfie to continue.');
+                            return;
+                        }
+                        router.push('/(verify)/gather-information');
+                    }}
+                    style={{backgroundColor: '#242b4d', borderRadius: 16, paddingVertical: 16, alignItems: 'center'}}
+                >
+                    <Text className="text-white font-JakartaBold text-base">Continue</Text>
+                </TouchableOpacity>
             </ScrollView>
-        </SafeAreaView>
-    )
-}
-export default UploadSelfie
+
+            <CustomModal
+                visible={modalVisible}
+                onClose={() => setModalVisible(false)}
+                title="Sample Selfie"
+                image={images.sample_selfie}
+                content="Look directly at the camera in a well-lit area. Ensure your full face is visible and avoid using filters."
+            />
+        </View>
+    );
+};
+
+export default UploadSelfie;

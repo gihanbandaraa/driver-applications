@@ -10,8 +10,8 @@ import {
     ScrollView
 } from 'react-native';
 import {getPaymentDetails, notifyDuePayments, notifyAllDuePayments, updatePaymentStatus} from "@/api/api";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {FontAwesome} from '@expo/vector-icons';
+import {Ionicons} from '@expo/vector-icons';
+import {useUser} from '@/context/UserContext';
 
 // Define the payment interface
 interface Payment {
@@ -24,6 +24,7 @@ interface Payment {
 }
 
 const Payments = () => {
+    const {userId} = useUser();
     const [payments, setPayments] = useState<Payment[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -35,9 +36,8 @@ const Payments = () => {
 
     const fetchPayments = async () => {
         try {
-            const driverId = await AsyncStorage.getItem('userId');
-            if (driverId) {
-                const response = await getPaymentDetails(driverId);
+            if (userId) {
+                const response = await getPaymentDetails(userId);
                 if (response.ok) {
                     setPayments(response.data);
                 }
@@ -51,8 +51,9 @@ const Payments = () => {
     };
 
     useEffect(() => {
-        fetchPayments();
-    }, []);
+        if (userId) fetchPayments();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userId]);
 
     const onRefresh = () => {
         setRefreshing(true);
@@ -62,9 +63,8 @@ const Payments = () => {
     const sendPaymentReminder = async (studentId: string, studentName: string) => {
         try {
             setSendingReminder(studentId);
-            const driverId = await AsyncStorage.getItem('userId');
-            if (driverId) {
-                await notifyDuePayments(driverId, studentId);
+            if (userId) {
+                await notifyDuePayments(userId, studentId);
             }
         } catch (error) {
             console.error('Error sending payment reminder:', error);
@@ -77,9 +77,8 @@ const Payments = () => {
     const sendAllPaymentReminders = async () => {
         try {
             setSendingAllReminders(true);
-            const driverId = await AsyncStorage.getItem('userId');
-            if (driverId) {
-                await notifyAllDuePayments(driverId);
+            if (userId) {
+                await notifyAllDuePayments(userId);
             }
         } catch (error) {
             console.error('Error sending all payment reminders:', error);
@@ -122,29 +121,29 @@ const Payments = () => {
 
     if (loading) {
         return (
-            <View className="flex-1 justify-center items-center bg-gray-50">
-                <ActivityIndicator size="large" color="#1D4ED8"/>
+            <View className="flex-1 justify-center items-center" style={{backgroundColor: '#f1f5f9'}}>
+                <ActivityIndicator size="large" color="#242b4d"/>
                 <Text className="mt-3 text-gray-600 font-JakartaMedium">Loading payment details...</Text>
             </View>
         );
     }
 
     return (
-        <View className="flex-1 bg-gray-50">
+        <View className="flex-1" style={{backgroundColor: '#f1f5f9'}}>
             {/* Header with gradient */}
-            <View className="bg-primary-900 px-4 pt-12 pb-8 rounded-b-3xl shadow-lg">
+            <View style={{backgroundColor: '#242b4d', paddingTop: 56, paddingBottom: 24, paddingHorizontal: 16, borderBottomLeftRadius: 0, borderBottomRightRadius: 0}}>
                 <View className="flex-row items-center justify-between mb-6">
                     <Text className="text-2xl font-JakartaBold text-white">
                         Payment Records
                     </Text>
-                    <View className="bg-white/20 p-2 rounded-full">
-                        <FontAwesome name="refresh" size={18} color="#fff" onPress={onRefresh}/>
-                    </View>
+                    <TouchableOpacity className="bg-white/20 p-2 rounded-full" onPress={onRefresh}>
+                        <Ionicons name="refresh-outline" size={18} color="#fff"/>
+                    </TouchableOpacity>
                 </View>
 
                 {/* Search Bar */}
                 <View className="bg-white/15 rounded-xl flex-row items-center px-3 py-2">
-                    <FontAwesome name="search" size={16} color="rgba(255,255,255,0.7)"/>
+                    <Ionicons name="search-outline" size={16} color="rgba(255,255,255,0.7)"/>
                     <TextInput
                         placeholder="Search students..."
                         placeholderTextColor="rgba(255, 255, 255, 0.6)"
@@ -184,7 +183,7 @@ const Payments = () => {
                         {sendingAllReminders ? (
                             <ActivityIndicator size="small" color="#1D4ED8"/>
                         ) : (
-                            <FontAwesome name="bell" size={16} color="#1D4ED8"/>
+                            <Ionicons name="notifications-outline" size={16} color="#1D4ED8"/>
                         )}
                         <Text className="ml-2 text-primary-900 font-JakartaBold">
                             {sendingAllReminders ? 'Sending Reminders...' : `Remind All (${overduePendingPayments.length})`}
@@ -261,7 +260,7 @@ const Payments = () => {
                                 <View className="bg-gray-50 rounded-xl p-3 mb-3">
                                     <View className="flex-row justify-between items-center mb-2">
                                         <View className="flex-row items-center">
-                                            <FontAwesome name="calendar" size={14} color="#6B7280"/>
+                                            <Ionicons name="calendar-outline" size={14} color="#6B7280"/>
                                             <Text className="ml-2 text-gray-700 font-JakartaMedium text-sm">
                                                 {payment.month}
                                             </Text>
@@ -275,7 +274,7 @@ const Payments = () => {
                                     </View>
                                     <View className="flex-row justify-between items-center">
                                         <View className="flex-row items-center">
-                                            <FontAwesome name="money" size={14} color="#6B7280"/>
+                                            <Ionicons name="cash-outline" size={14} color="#6B7280"/>
                                             <Text className="ml-2 text-gray-700 font-JakartaMedium text-sm">
                                                 Amount
                                             </Text>
@@ -298,7 +297,7 @@ const Payments = () => {
                                             {updatingPayment === payment.id ? (
                                                 <ActivityIndicator size="small" color="#ffffff"/>
                                             ) : (
-                                                <FontAwesome name="check" size={16} color="#fff"/>
+                                                <Ionicons name="checkmark-outline" size={16} color="#fff"/>
                                             )}
                                             <Text className="ml-2 text-white font-JakartaBold">
                                                 {updatingPayment === payment.id ? 'Updating...' : 'Mark as Paid'}
@@ -316,7 +315,7 @@ const Payments = () => {
                                             {sendingReminder === payment.id ? (
                                                 <ActivityIndicator size="small" color="#ffffff"/>
                                             ) : (
-                                                <FontAwesome name="bell" size={16} color="#fff"/>
+                                                <Ionicons name="notifications-outline" size={16} color="#fff"/>
                                             )}
                                             <Text className="ml-2 text-white font-JakartaBold">
                                                 {sendingReminder === payment.id ? 'Sending...' : 'Send Reminder'}
@@ -330,7 +329,7 @@ const Payments = () => {
                 ) : (
                     <View className="flex-1 justify-center items-center py-20">
                         <View className="bg-gray-50 rounded-full p-6 mb-4">
-                            <FontAwesome name="money" size={50} color="#cbd5e1"/>
+                            <Ionicons name="cash-outline" size={50} color="#cbd5e1"/>
                         </View>
                         <Text className="text-xl font-JakartaBold text-gray-500 mb-1">
                             No payment records found

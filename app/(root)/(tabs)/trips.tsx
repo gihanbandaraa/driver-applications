@@ -11,8 +11,8 @@ import {
     Image
 } from 'react-native'
 import React, {useEffect, useState, useCallback} from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import {Ionicons, MaterialCommunityIcons} from '@expo/vector-icons'
+import {useUser} from '@/context/UserContext'
 import { debounce } from 'lodash'
 
 const {getTripDetails, getTripSummaries} = require('@/api/api')
@@ -31,6 +31,7 @@ interface TripDetail {
 }
 
 const Trips = () => {
+    const {userId} = useUser();
     const [tripSummaries, setTripSummaries] = useState<TripSummary[]>([]);
     const [filteredTrips, setFilteredTrips] = useState<TripSummary[]>([]);
     const [selectedTrip, setSelectedTrip] = useState<string | null>(null);
@@ -43,9 +44,8 @@ const Trips = () => {
 
     const fetchTripSummaries = async () => {
         try {
-            const driverId = await AsyncStorage.getItem('userId');
-            if (driverId) {
-                const response = await getTripSummaries(driverId);
+            if (userId) {
+                const response = await getTripSummaries(userId);
                 if (response.ok && response.data) {
                     setTripSummaries(response.data);
                     setFilteredTrips(response.data);
@@ -60,8 +60,9 @@ const Trips = () => {
     };
 
     useEffect(() => {
-        fetchTripSummaries();
-    }, []);
+        if (userId) fetchTripSummaries();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userId]);
 
     // Search functionality with debounce
     const handleSearch = useCallback(
@@ -93,9 +94,8 @@ const Trips = () => {
     const fetchTripDetails = async (date: string) => {
         setDetailsLoading(true);
         try {
-            const driverId = await AsyncStorage.getItem('userId');
-            if (driverId) {
-                const response = await getTripDetails(driverId, date);
+            if (userId) {
+                const response = await getTripDetails(userId, date);
                 if (response.ok && response.data) {
                     setTripDetails(response.data);
                 }
@@ -196,59 +196,46 @@ const Trips = () => {
     );
 
     return (
-        <SafeAreaView className="flex-1 bg-gray-50">
-            <View className="flex-1 px-5 pt-8 pb-4">
-                <Text className="text-3xl font-JakartaExtraBold text-primary-900 mb-2">Trip History</Text>
-                <Text className="text-base text-gray-500 font-JakartaMedium mb-6">View your past trips and student attendance</Text>
+        <View className="flex-1" style={{backgroundColor: '#f1f5f9'}}>
+            {/* Navy Header */}
+            <View style={{backgroundColor: '#242b4d', paddingBottom: 24, paddingTop: 56, paddingHorizontal: 20}}>
+                <Text className="text-white font-JakartaExtraBold text-2xl">Trip History</Text>
+                <Text className="text-white/60 font-JakartaMedium text-sm mt-1">Your past trips & attendance</Text>
 
-                {/* Search Bar */}
-                <View className="bg-white rounded-xl shadow-sm flex-row items-center px-4 py-3 mb-6 border border-gray-100">
-                    <Ionicons name="search" size={20} color="#9ca3af" />
+                <View style={{flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 14, paddingHorizontal: 14, marginTop: 16}}>
+                    <Ionicons name="search-outline" size={18} color="rgba(255,255,255,0.6)" />
                     <TextInput
-                        className="flex-1 ml-2 py-1 text-base font-JakartaMedium text-gray-800"
+                        style={{flex: 1, paddingVertical: 12, paddingHorizontal: 10, color: 'white', fontFamily: 'Jakarta-Medium', fontSize: 15}}
                         placeholder="Search by date..."
+                        placeholderTextColor="rgba(255,255,255,0.45)"
                         value={searchQuery}
                         onChangeText={setSearchQuery}
-                        placeholderTextColor="#9ca3af"
                     />
                     {searchQuery ? (
                         <TouchableOpacity onPress={() => setSearchQuery('')}>
-                            <Ionicons name="close-circle" size={20} color="#9ca3af" />
+                            <Ionicons name="close-circle" size={18} color="rgba(255,255,255,0.6)" />
                         </TouchableOpacity>
                     ) : null}
                 </View>
+            </View>
 
-                {loading ? (
-                    <View className="flex-1 justify-center items-center">
-                        <ActivityIndicator size="large" color="#3b82f6" />
+            {loading ? (
+                    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60}}>
+                        <ActivityIndicator size="large" color="#242b4d" />
                         <Text className="text-gray-500 mt-4 font-JakartaMedium">Loading trips...</Text>
                     </View>
                 ) : filteredTrips.length === 0 ? (
-                    <View className="flex-1 justify-center items-center px-6">
-                        {searchQuery ? (
-                            <>
-
-                                <Text className="text-xl text-gray-800 font-JakartaBold mt-6">No matching trips</Text>
-                                <Text className="text-base text-gray-500 font-JakartaMedium mt-2 text-center">
-                                    We couldn't find any trips matching your search
-                                </Text>
-                            </>
-                        ) : (
-                            <>
-                                <Image
-
-                                    className="w-40 h-40"
-                                    resizeMode="contain"
-                                />
-                                <Text className="text-xl text-gray-800 font-JakartaBold mt-6">No trips yet</Text>
-                                <Text className="text-base text-gray-500 font-JakartaMedium mt-2 text-center">
-                                    You haven't completed any trips yet. They will appear here when available.
-                                </Text>
-                            </>
-                        )}
+                    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, paddingTop: 60}}>
+                        <View style={{backgroundColor: '#e2e8f0', borderRadius: 64, width: 80, height: 80, alignItems: 'center', justifyContent: 'center', marginBottom: 16}}>
+                            <Ionicons name="map-outline" size={40} color="#94a3b8" />
+                        </View>
+                        <Text className="text-xl text-gray-800 font-JakartaBold mt-2">{searchQuery ? 'No matching trips' : 'No trips yet'}</Text>
+                        <Text className="text-base text-gray-500 font-JakartaMedium mt-2 text-center">
+                            {searchQuery ? "We couldn't find any trips matching your search" : "You haven't completed any trips yet."}
+                        </Text>
                         <TouchableOpacity
                             onPress={onRefresh}
-                            className="mt-6 py-3.5 px-6 bg-primary-600 rounded-xl shadow-sm"
+                            style={{marginTop: 20, paddingVertical: 12, paddingHorizontal: 24, backgroundColor: '#242b4d', borderRadius: 14}}
                         >
                             <Text className="text-white font-JakartaBold">Refresh</Text>
                         </TouchableOpacity>
@@ -259,18 +246,18 @@ const Trips = () => {
                         renderItem={renderTripSummary}
                         keyExtractor={(item) => item.date}
                         showsVerticalScrollIndicator={false}
-                        contentContainerClassName="pb-4"
+                        contentContainerStyle={{padding: 16, paddingBottom: 90}}
                         refreshControl={
                             <RefreshControl
                                 refreshing={refreshing}
                                 onRefresh={onRefresh}
-                                colors={["#3b82f6"]}
+                                colors={["#242b4d"]}
                             />
                         }
                     />
                 )}
 
-                <Modal
+            <Modal
                     visible={modalVisible}
                     animationType="slide"
                     onRequestClose={() => setModalVisible(false)}
@@ -303,11 +290,9 @@ const Trips = () => {
                                     </View>
                                 ) : tripDetails.length === 0 ? (
                                     <View className="flex-1 justify-center items-center py-20">
-                                        <Image
-
-                                            className="w-40 h-40"
-                                            resizeMode="contain"
-                                        />
+                                        <View style={{width: 80, height: 80, borderRadius: 40, backgroundColor: '#e2e8f0', alignItems: 'center', justifyContent: 'center', marginBottom: 16}}>
+                                            <Ionicons name="document-outline" size={38} color="#94a3b8" />
+                                        </View>
                                         <Text className="text-xl text-gray-800 font-JakartaBold mt-6">No student data</Text>
                                         <Text className="text-base text-gray-500 font-JakartaMedium mt-2 text-center">
                                             No attendance records were found for this trip
@@ -342,7 +327,7 @@ const Trips = () => {
                                             )}
                                             keyExtractor={(item, index) => index.toString()}
                                             showsVerticalScrollIndicator={false}
-                                            contentContainerClassName="pb-10"
+                                            contentContainerStyle={{paddingBottom: 40}}
                                         />
                                     </>
                                 )}
@@ -350,8 +335,7 @@ const Trips = () => {
                         </View>
                     </View>
                 </Modal>
-            </View>
-        </SafeAreaView>
+        </View>
     );
 };
 

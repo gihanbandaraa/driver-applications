@@ -1,9 +1,12 @@
-import { View, Text, SafeAreaView, TouchableOpacity, ScrollView, Image, StatusBar, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, StatusBar, Modal, ActivityIndicator, Alert } from 'react-native';
 import React, { useEffect, useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { MaterialCommunityIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import { signOut } from "@/api/api";
+import { signOut, updateDriverSelfie } from "@/api/api";
+import { useUser } from "@/context/UserContext";
 import { LinearGradient } from 'expo-linear-gradient';
 
 const Profile = () => {
@@ -21,6 +24,8 @@ const Profile = () => {
         is_pending: 1
     });
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
+    const {userId} = useUser();
 
     useEffect(() => {
         loadDriverData().catch(error => console.error('Error loading driver data:', error));
@@ -43,6 +48,37 @@ const Profile = () => {
         }
     };
 
+    const handleChangePhoto = async () => {
+        const {status} = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permission Required', 'Please allow access to your photo library.');
+            return;
+        }
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+        });
+        if (result.canceled || !result.assets?.length) return;
+        const imageUri = result.assets[0].uri;
+        setUploadingPhoto(true);
+        try {
+            const res = await updateDriverSelfie(userId!, imageUri);
+            if (res.ok) {
+                const newUrl = res.data.selfie_url;
+                const updated = {...driverData, selfie_url: newUrl};
+                setDriverData(updated);
+                await AsyncStorage.setItem('driver', JSON.stringify(updated));
+                Alert.alert('Success', 'Profile photo updated!');
+            } else {
+                Alert.alert('Error', 'Failed to update photo. Please try again.');
+            }
+        } finally {
+            setUploadingPhoto(false);
+        }
+    };
+
     const initiateLogout = () => {
         setShowLogoutConfirm(true);
     };
@@ -58,58 +94,54 @@ const Profile = () => {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-gray-50">
-            <StatusBar barStyle="dark-content"/>
+        <SafeAreaView className="flex-1" style={{backgroundColor: '#f1f5f9'}}>
+            <StatusBar barStyle="light-content"/>
 
             {/* App Bar */}
-            <View className="px-5 pt-4 pb-2 flex-row justify-between items-center">
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    className="bg-white p-2 rounded-full shadow-sm"
-                >
-                    <Ionicons name="chevron-back" size={24} color="#1E3A8A"/>
-                </TouchableOpacity>
-                <Text className="text-xl font-JakartaBold text-gray-800">My Profile</Text>
-                <TouchableOpacity
-                    onPress={() => router.push("/(root)/edit-profile")}
-                    className="bg-white p-2 rounded-full shadow-sm"
-                >
-                    <MaterialCommunityIcons name="pencil" size={22} color="#1E3A8A"/>
-                </TouchableOpacity>
+            <View style={{backgroundColor: '#242b4d', paddingTop: 8, paddingBottom: 24, paddingHorizontal: 20}}>
+                <View className="flex-row justify-between items-center">
+                    <Text className="text-xl font-JakartaBold text-white">My Profile</Text>
+                    <TouchableOpacity
+                        onPress={() => router.push('/(root)/edit-profile')}
+                        style={{backgroundColor: 'rgba(255,255,255,0.15)', padding: 8, borderRadius: 20}}
+                    >
+                        <MaterialCommunityIcons name="pencil" size={20} color="white"/>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Avatar */}
+                <View className="items-center mt-5">
+                    <TouchableOpacity onPress={handleChangePhoto} disabled={uploadingPhoto}
+                        style={{shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.2, shadowRadius: 8}}>
+                        {driverData.selfie_url ? (
+                            <Image
+                                source={{uri: `${process.env.EXPO_PUBLIC_API_URL}/${driverData.selfie_url}`}}
+                                style={{width: 96, height: 96, borderRadius: 48, borderWidth: 3, borderColor: 'rgba(255,255,255,0.5)'}}
+                            />
+                        ) : (
+                            <View style={{width: 96, height: 96, borderRadius: 48, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: 'rgba(255,255,255,0.3)'}}>
+                                <FontAwesome5 name="user-alt" size={38} color="rgba(255,255,255,0.7)"/>
+                            </View>
+                        )}
+                        {/* Camera overlay */}
+                        <View style={{position: 'absolute', bottom: 0, right: 0, backgroundColor: '#4ade80', borderRadius: 14, width: 28, height: 28, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#242b4d'}}>
+                            {uploadingPhoto
+                                ? <ActivityIndicator size="small" color="#242b4d" />
+                                : <Ionicons name="camera" size={14} color="#242b4d" />}
+                        </View>
+                    </TouchableOpacity>
+                    <Text className="text-white font-JakartaExtraBold text-xl mt-3">{driverData.full_name}</Text>
+                    <View style={{marginTop: 6, paddingHorizontal: 14, paddingVertical: 4, borderRadius: 20, backgroundColor: driverData.is_verified ? 'rgba(74,222,128,0.2)' : 'rgba(251,191,36,0.2)'}}>
+                        <Text style={{fontSize: 12, fontFamily: 'Jakarta-Medium', color: driverData.is_verified ? '#4ade80' : '#fbbf24'}}>
+                            {driverData.is_verified ? '✓ Verified Driver' : '⏳ Pending Verification'}
+                        </Text>
+                    </View>
+                </View>
             </View>
 
             <ScrollView className="flex-1" style={{
                 marginBottom: 100,
             }} showsVerticalScrollIndicator={false}>
-                {/* Profile Header Section */}
-                <View className="items-center mt-6 mb-8 px-4">
-                    <View className="shadow-lg">
-                        {driverData.selfie_url ? (
-                            <Image
-                                source={{uri: `http://192.168.1.168:3000/${driverData.selfie_url}`}}
-                                className="w-32 h-32 rounded-full border-4 border-white"
-                            />
-                        ) : (
-                            <View
-                                className="w-32 h-32 rounded-full bg-gray-200 items-center justify-center border-4 border-white">
-                                <FontAwesome5 name="user-alt" size={48} color="#94A3B8"/>
-                            </View>
-                        )}
-                    </View>
-
-                    <Text className="text-2xl font-JakartaExtraBold text-gray-900 mt-4">
-                        {driverData.full_name}
-                    </Text>
-
-                    <View
-                        className={`mt-2 px-4 py-1.5 rounded-full ${driverData.is_verified ? 'bg-green-100' : 'bg-amber-100'}`}>
-                        <Text
-                            className={`text-sm font-JakartaMedium ${driverData.is_verified ? 'text-green-700' : 'text-amber-700'}`}>
-                            {driverData.is_verified ? '✓ Verified Driver' : '⏳ Pending Verification'}
-                        </Text>
-                    </View>
-                </View>
-
                 {/* Info Cards */}
                 <View className="px-5 pb-8">
                     {/* Personal Info Card */}

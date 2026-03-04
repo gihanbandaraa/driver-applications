@@ -2,7 +2,7 @@ import {Alert} from "react-native";
 import {router} from "expo-router";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const HostName = "http://192.168.1.168:3000";
+const HostName = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.1.168:3000";
 
 export const addUser = async (name: string, email: string, password: string, googleId: string, role: string) => {
     try {
@@ -56,9 +56,15 @@ export const signIn = async (email: string, password: string) => {
                     text: 'OK', onPress: () => {
                         // Check verification status and route accordingly
                         if (data.verification_status === 'verified') {
-                            router.replace('/(root)/(tabs)/home');  // Navigate to root/home
-                        } else if (['not_verified'].includes(data.verification_status)) {
-                            router.replace('/(verify)/verifying-home');  // Navigate to verification screen
+                            router.replace('/(root)/(tabs)/home');
+                        } else if (data.verification_status === 'not_verified') {
+                            router.replace('/(verify)/verifying-home');
+                        } else if (
+                            data.verification_status === 'pending' ||
+                            data.verification_status === 'auto_approved' ||
+                            data.verification_status === 'auto_disapproved'
+                        ) {
+                            router.replace('/(pending)/pending-verification');
                         }
                     }
                 }
@@ -410,6 +416,40 @@ export const notifyDuePayments = async (driverId: string , studentId:string) => 
     }
 
 }
+
+export const updateDriverSelfie = async (userId: string, imageUri: string) => {
+    try {
+        const formData = new FormData();
+        const filename = imageUri.split('/').pop() ?? 'selfie.jpg';
+        const match = /\.([a-zA-Z]+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+        formData.append('selfie', {uri: imageUri, name: filename, type} as any);
+        const response = await fetch(`${HostName}/api/drivers/update-selfie/${userId}`, {
+            method: 'PUT',
+            body: formData,
+        });
+        const data = await response.json();
+        return {ok: response.ok, data};
+    } catch (error) {
+        console.error('Network error:', error);
+        return {ok: false, error};
+    }
+};
+
+export const updateDriverProfile = async (userId: string, phone_num: string, address: string) => {
+    try {
+        const response = await fetch(`${HostName}/api/drivers/update-profile/${userId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({phone_num, address}),
+        });
+        const data = await response.json();
+        return {ok: response.ok, data};
+    } catch (error) {
+        console.error('Network error:', error);
+        return {ok: false, error};
+    }
+};
 
 export const updatePaymentStatus = async ( studentId: string, status: string) => {
     try {

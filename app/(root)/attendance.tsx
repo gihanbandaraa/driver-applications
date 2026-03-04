@@ -1,6 +1,7 @@
 import React, {useState, useCallback} from 'react';
 import {View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput, Image} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useUser} from '@/context/UserContext';
 import {getStudents} from '@/api/api';
 import {Student} from "@/types/student";
 import {useRouter} from 'expo-router';
@@ -8,6 +9,7 @@ import {AttendanceStatus, RideStatus, Period} from '@/types/attendance';
 import {useFocusEffect} from '@react-navigation/native';
 import {markAttendance, getAttendance} from "@/api/api";
 import {icons} from "@/constants";
+import {Ionicons} from '@expo/vector-icons';
 
 interface AttendanceRecord {
     morning_attendance_status: AttendanceStatus;
@@ -18,6 +20,7 @@ interface AttendanceRecord {
 
 const AttendanceScreen = () => {
     const router = useRouter();
+    const {userId} = useUser();
     const [students, setStudents] = useState<Student[]>([]);
     const [period, setPeriod] = useState<Period>('MORNING');
     const [loading, setLoading] = useState(false);
@@ -34,17 +37,12 @@ const AttendanceScreen = () => {
     );
 
     const loadStudentsWithAttendance = useCallback(async (selectedPeriod: Period) => {
+        if (!userId) return;
         setLoading(true);
         try {
-            const driverId = await AsyncStorage.getItem('userId');
-            if (!driverId) {
-                Alert.alert('Session Expired', 'Please login again');
-                router.replace('/(auth)/sign-in');
-                return;
-            }
             const today = new Date().toISOString().split('T')[0];
-            const studentsResponse = await getStudents(driverId);
-            const attendanceResponse = await getAttendance(driverId, today);
+            const studentsResponse = await getStudents(userId);
+            const attendanceResponse = await getAttendance(userId, today);
 
             if (studentsResponse.ok && studentsResponse.data) {
                 let studentsWithAttendance = studentsResponse.data;
@@ -92,7 +90,7 @@ const AttendanceScreen = () => {
         } finally {
             setLoading(false);
         }
-    }, [router]);
+    }, [router, userId]);
 
     useFocusEffect(
         useCallback(() => {
@@ -118,15 +116,14 @@ const AttendanceScreen = () => {
 
 
         try {
-            const driverId = await AsyncStorage.getItem('userId');
-            if (!driverId) {
+            if (!userId) {
                 Alert.alert('Error', 'User ID not found');
                 return;
             }
 
             const today = new Date().toISOString().split('T')[0];
             const response = await markAttendance(
-                driverId,
+                userId,
                 studentId.toString(),
                 today,
                 period,
@@ -154,63 +151,64 @@ const AttendanceScreen = () => {
     };
 
     return (
-        <View className="flex-1 bg-gray-100">
+        <View className="flex-1" style={{backgroundColor: '#f1f5f9'}}>
             {/* Header */}
-            <View className="bg-primary-900 px-4 pt-12 pb-6 rounded-b-3xl">
-                <View className="flex-row items-center justify-between mb-6">
-                    <Text className="text-2xl font-JakartaBold text-white">
-                        Attendance
-                    </Text>
-                    <Text className="text-white font-JakartaMedium">
-                        {new Date().toLocaleDateString()}
-                    </Text>
+            <View style={{backgroundColor: '#242b4d', paddingTop: 56, paddingBottom: 24, paddingHorizontal: 20}}>
+                <View className="flex-row items-center justify-between mb-4">
+                    <View>
+                        <Text className="text-white font-JakartaExtraBold text-2xl">Attendance</Text>
+                        <Text className="text-white/60 font-JakartaMedium text-sm mt-0.5">
+                            {new Date().toLocaleDateString('en-US', {weekday: 'long', month: 'long', day: 'numeric'})}
+                        </Text>
+                    </View>
+                    <View style={{backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6}}>
+                        <Text className="text-white font-JakartaMedium text-sm">{filteredStudents.length} Students</Text>
+                    </View>
                 </View>
 
-                {/* Search Bar */}
-                <View className="bg-white/10 rounded-xl p-2 mb-4">
+                {/* Search */}
+                <View style={{flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 14, paddingHorizontal: 14, marginBottom: 14}}>
+                    <Ionicons name="search-outline" size={18} color="rgba(255,255,255,0.6)" />
                     <TextInput
+                        style={{flex: 1, paddingVertical: 12, paddingHorizontal: 10, color: 'white', fontFamily: 'Jakarta-Medium', fontSize: 15}}
                         placeholder="Search students..."
-                        placeholderTextColor="rgba(255, 255, 255, 0.6)"
+                        placeholderTextColor="rgba(255,255,255,0.45)"
                         value={searchQuery}
                         onChangeText={setSearchQuery}
-                        className="px-4 py-2 text-white font-JakartaMedium"
                     />
                 </View>
 
                 {/* Period Selector */}
-                <View className="bg-white/10 rounded-xl p-1.5">
-                    <View className="flex-row space-x-2">
-                        {['MORNING', 'AFTERNOON'].map((p) => (
-                            <TouchableOpacity
-                                key={p}
-                                onPress={() => handlePeriodChange(p as Period)}
-                                disabled={loading}
-                                className={`flex-1 py-3.5 px-4 rounded-lg ${
-                                    period === p ? 'bg-white' : ''
-                                }`}
-                            >
-                                <Text className={`text-center font-JakartaMedium ${
-                                    period === p ? 'text-primary-900' : 'text-white'
-                                }`}>
-                                    {p === 'MORNING' ? '🌅 Morning' : '🌇 Afternoon'}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
+                <View style={{flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: 4}}>
+                    {(['MORNING', 'AFTERNOON'] as Period[]).map((p) => (
+                        <TouchableOpacity
+                            key={p}
+                            onPress={() => handlePeriodChange(p)}
+                            disabled={loading}
+                            style={{
+                                flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center',
+                                backgroundColor: period === p ? 'white' : 'transparent',
+                            }}
+                        >
+                            <Text style={{fontFamily: 'Jakarta-Medium', color: period === p ? '#242b4d' : 'rgba(255,255,255,0.7)', fontSize: 14}}>
+                                {p === 'MORNING' ? '🌅 Morning' : '🌇 Afternoon'}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
                 </View>
             </View>
 
-            {/* Student List */}
             {loading ? (
-                <View className="flex-1 justify-center items-center">
-                    <ActivityIndicator size="large" color="#1D4ED8"/>
+                <View className="flex-1 justify-center items-center py-20">
+                    <ActivityIndicator size="large" color="#242b4d"/>
+                    <Text className="text-gray-500 mt-3 font-JakartaMedium">Loading students...</Text>
                 </View>
             ) : (
-                <ScrollView className="flex-1 px-4 pt-4">
+                <ScrollView className="flex-1 px-4" style={{paddingTop: 16}} contentContainerStyle={{paddingBottom: 90}}>
                     {filteredStudents.length > 0 ? (
                         filteredStudents.map((student) => (
                             <View key={student.id}
-                                  className="bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-100">
+                                  style={{backgroundColor: 'white', borderRadius: 18, padding: 16, marginBottom: 14, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2}}>
                                 <View className="flex-row items-center justify-between mb-4">
                                     <View>
                                         <Text className="text-lg font-JakartaBold text-gray-900">
@@ -227,14 +225,14 @@ const AttendanceScreen = () => {
                                                 ? 'bg-red-100'
                                                 : 'bg-gray-100'
                                     }`}>
-                                        <Text className={`text-sm font-JakartaMedium ${
+                                        <Text className={`text-xs font-JakartaBold ${
                                             student.attendanceStatus === 'PRESENT'
                                                 ? 'text-green-700'
                                                 : student.attendanceStatus === 'ABSENT'
                                                     ? 'text-red-700'
-                                                    : 'text-gray-700'
+                                                    : 'text-gray-500'
                                         }`}>
-                                            {student.attendanceStatus || 'Not Marked'}
+                                            {student.attendanceStatus || 'Unmarked'}
                                         </Text>
                                     </View>
                                 </View>

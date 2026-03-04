@@ -1,17 +1,15 @@
-import {View, Text, ScrollView, Modal, Animated, Easing} from 'react-native'
+import {View, Text, ScrollView, Modal, Animated, Easing, KeyboardAvoidingView, Platform, ActivityIndicator, TouchableOpacity} from 'react-native'
 import React, {useEffect, useState, useRef} from 'react'
-import {SafeAreaView} from 'react-native-safe-area-context'
 import InputField from "@/components/InputField";
 import {useUpload} from "@/context/UploadContext";
-import CustomButton from "@/components/CustomButton";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {addDriver} from "@/api/api";
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const GatherInformation = () => {
     // Existing state variables
     const [isLoggedIn, setIsLoggedIn] = useState<string | null>(null);
+    const [userId, setUserId] = useState<string | null>(null);
     const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -23,9 +21,10 @@ const GatherInformation = () => {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                const userId = await AsyncStorage.getItem('userId');
+                const uid = await AsyncStorage.getItem('userId');
                 const loginStatus = await AsyncStorage.getItem('isLoggedIn');
                 const verificationStatus = await AsyncStorage.getItem('verification_status');
+                setUserId(uid);
                 setIsLoggedIn(loginStatus);
                 setVerificationStatus(verificationStatus);
                 setLoading(false);
@@ -101,7 +100,6 @@ const GatherInformation = () => {
         }
         try {
             setSubmitting(true);
-            const userId = await AsyncStorage.getItem('userId') as string;
             await addDriver(
                 userId,
                 fullName,
@@ -128,15 +126,22 @@ const GatherInformation = () => {
     });
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
-            <ScrollView className="flex-grow">
-                <View className="flex justify-center mx-4 mt-10" style={{
-                    marginBottom: 12,
-                }}>
-                    <Text className="text-4xl font-JakartaExtraBold text-blue-500">Verify Your Identity</Text>
-                    <Text className="text-lg font-JakartaLight mt-4">Enter the required details to complete your
-                        verification securely.</Text>
-                    <View className="flex mt-8 mx-2">
+        <View style={{flex: 1, backgroundColor: '#f1f5f9'}}>
+            {/* Navy Header */}
+            <View style={{backgroundColor: '#242b4d', paddingTop: 56, paddingBottom: 24, paddingHorizontal: 20}}>
+                <Text className="text-white font-JakartaExtraBold text-2xl">Driver Details</Text>
+                <Text className="text-white/60 font-JakartaMedium text-sm mt-1">Complete all fields to verify your identity</Text>
+            </View>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={{flex: 1}}
+            >
+            <ScrollView
+                style={{flex: 1}}
+                contentContainerStyle={{padding: 20, paddingBottom: 40}}
+                keyboardShouldPersistTaps="handled"
+            >
+                <View style={{backgroundColor: 'white', borderRadius: 20, padding: 20, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2}}>
                         <InputField label={"Full Name"} placeholder={"Enter your full name"}
                                     value={fullName} onChangeText={setFullName}
                         />
@@ -155,15 +160,16 @@ const GatherInformation = () => {
                         <InputField label={"Address"} placeholder={"Enter your address"}
                                     value={address} onChangeText={setAddress}/>
 
-                        <CustomButton
-                            title="Submit"
+                        <TouchableOpacity
                             onPress={handleSubmit}
-                            className="mt-8 py-4 w-full"
                             disabled={submitting}
-                        />
-                    </View>
+                            style={{backgroundColor: '#242b4d', borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 24}}
+                        >
+                            {submitting ? <ActivityIndicator size="small" color="white" /> : <Text className="text-white font-JakartaBold text-base">Submit</Text>}
+                        </TouchableOpacity>
                 </View>
             </ScrollView>
+            </KeyboardAvoidingView>
 
             {/* Loading Modal */}
             <Modal
@@ -171,12 +177,12 @@ const GatherInformation = () => {
                 transparent={true}
                 animationType="fade"
             >
-                <View className="flex-1 justify-center items-center bg-black bg-opacity-50 px-6">
-                    <View className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-xl">
-                        <View className="items-center mb-6">
+                <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 24}}>
+                    <View style={{backgroundColor: 'white', borderRadius: 24, width: '100%', maxWidth: 360, padding: 28, shadowColor: '#000', shadowOffset: {width: 0, height: 8}, shadowOpacity: 0.15, shadowRadius: 12, elevation: 10}}>
+                        <View style={{alignItems: 'center', marginBottom: 24}}>
                             <Animated.View style={{transform: [{scale: pulseAnim}]}}>
-                                <View className="bg-blue-100 p-4 rounded-full mb-3">
-                                    <MaterialCommunityIcons name="shield-account" size={36} color="#1E3A8A" />
+                                <View style={{backgroundColor: 'rgba(36,43,77,0.08)', padding: 18, borderRadius: 50, marginBottom: 12}}>
+                                    <MaterialCommunityIcons name="shield-account" size={36} color="#242b4d" />
                                 </View>
                             </Animated.View>
 
@@ -190,46 +196,31 @@ const GatherInformation = () => {
                         </View>
 
                         {/* Progress bar container */}
-                        <View className="h-2 bg-gray-200 rounded-full w-full overflow-hidden mt-2">
+                        <View style={{height: 8, backgroundColor: '#e2e8f0', borderRadius: 4, width: '100%', overflow: 'hidden', marginTop: 8}}>
                             <Animated.View
-                                className="h-full bg-blue-600 rounded-full"
-                                style={{width: progressWidth}}
+                                style={{height: '100%', backgroundColor: '#242b4d', borderRadius: 4, width: progressWidth}}
                             />
                         </View>
 
                         {/* Processing steps */}
-                        <View className="mt-8 space-y-3">
-                            <View className="flex-row items-center">
-                                <View className="bg-blue-100 p-2 rounded-full">
-                                    <Ionicons name="document-text" size={18} color="#1E3A8A" />
+                        <View style={{marginTop: 20, gap: 12}}>
+                            {[
+                                {icon: 'document-text' as const,    label: 'Uploading documents'},
+                                {icon: 'shield-checkmark' as const,  label: 'Verifying identity'},
+                                {icon: 'save' as const,              label: 'Saving your information'},
+                            ].map((s, i) => (
+                                <View key={i} style={{flexDirection: 'row', alignItems: 'center'}}>
+                                    <View style={{backgroundColor: 'rgba(36,43,77,0.08)', padding: 8, borderRadius: 20}}>
+                                        <Ionicons name={s.icon} size={18} color="#242b4d" />
+                                    </View>
+                                    <Text className="ml-3 text-gray-700 font-JakartaMedium">{s.label}</Text>
                                 </View>
-                                <Text className="ml-3 text-gray-700 font-JakartaMedium">
-                                    Uploading documents
-                                </Text>
-                            </View>
-
-                            <View className="flex-row items-center mt-2">
-                                <View className="bg-blue-100 p-2 rounded-full">
-                                    <Ionicons name="shield-checkmark" size={18} color="#1E3A8A" />
-                                </View>
-                                <Text className="ml-3 text-gray-700 font-JakartaMedium">
-                                    Verifying identity
-                                </Text>
-                            </View>
-
-                            <View className="flex-row items-center mt-2">
-                                <View className="bg-blue-100 p-2 rounded-full">
-                                    <Ionicons name="save" size={18} color="#1E3A8A" />
-                                </View>
-                                <Text className="ml-3 text-gray-700 font-JakartaMedium">
-                                    Saving your information
-                                </Text>
-                            </View>
+                            ))}
                         </View>
                     </View>
                 </View>
             </Modal>
-        </SafeAreaView>
+        </View>
     )
 }
 

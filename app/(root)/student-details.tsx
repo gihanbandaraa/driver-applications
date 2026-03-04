@@ -150,14 +150,12 @@ const StudentDetails = () => {
 
         if (isLoading || !student) {
             return (
-                <SafeAreaView className="flex-1 bg-white">
-                    <View className="flex-1 justify-center items-center">
-                        <ActivityIndicator size="large" color="#4F46E5" />
-                        <Text className="text-lg font-JakartaMedium text-secondary-500 mt-4">
-                            Loading student details...
-                        </Text>
-                    </View>
-                </SafeAreaView>
+                <View style={{flex: 1, backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center'}}>
+                    <ActivityIndicator size="large" color="#242b4d" />
+                    <Text className="text-base font-JakartaMedium text-gray-500 mt-4">
+                        Loading student details...
+                    </Text>
+                </View>
             );
         }
 

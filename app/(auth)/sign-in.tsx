@@ -1,66 +1,104 @@
-import {View, Text, ScrollView, Alert} from 'react-native'
-import React, {useState} from 'react'
+import {View, Text, Alert, KeyboardAvoidingView, Platform, ScrollView, Image} from 'react-native'
+import React, {useState, useRef} from 'react'
+import {SafeAreaView} from 'react-native-safe-area-context'
 import InputField from '@/components/InputField'
 import CustomButton from '@/components/CustomButton'
 import {icons} from '@/constants'
 import {Link} from 'expo-router'
-import OAuth from "@/components/OAuth"
-import {signIn, signOut} from "@/api/api"
-
+import {signIn} from "@/api/api"
 
 const SignIn = () => {
-
-    const [form, setForm] = useState({
-        email: "",
-        password: "",
-    });
+    const [form, setForm] = useState({email: "", password: ""});
+    const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const passwordRef = useRef<any>(null);
 
     async function handleSignIn() {
         if (!form.email || !form.password) {
-            Alert.alert("Error", "Please fill all the fields");
+            Alert.alert("Error", "Please fill in all fields");
             return;
         }
+        setLoading(true);
         try {
-            const response = await signIn(
-                form.email,
-                form.password
-            );
+            await signIn(form.email, form.password);
         } catch (error) {
             console.error(error);
+        } finally {
+            setLoading(false);
         }
     }
 
     return (
-        <ScrollView className="flex-1 bg-white ">
-            <View className="flex justify-center bg-white mx-4 h-full">
-                <Text className="text-4xl text-blue-500 font-JakartaExtraBold">Login</Text>
-                <Text className="text-lg mt-2 font-JakartaBold  ">Welcome back! Sign in to your account</Text>
-                <View className="py-5 px-2 flex justify-center">
-                    <InputField
-                        label="Email Address"
-                        placeholder="Enter your Email"
-                        icon={icons.email}
-                        value={form.email}
-                        onChangeText={(value) => setForm({...form, email: value})}
-                    />
-                    <InputField
-                        label="Password"
-                        placeholder="Enter your password"
-                        icon={icons.lock}
-                        value={form.password}
-                        secureTextEntry={true}
-                        onChangeText={(value) => setForm({...form, password: value})}
-                    />
-                    <CustomButton title="Sign In" className='py-4 mt-8' onPress={handleSignIn}/>
-                </View>
-            </View>
-            <OAuth/>
-            <Link href="/sign-up" className="text-lg text-center text-general-200 mt-10">
-                <Text>Don't have an account?{" "}</Text>
-                <Text className="text-primary-500">Sign Up</Text>
-            </Link>
-        </ScrollView>
-    )
-}
+        <SafeAreaView className="flex-1 bg-[#242b4d]">
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                className="flex-1"
+            >
+                <ScrollView
+                    contentContainerStyle={{flexGrow: 1}}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                    {/* Branding header */}
+                    <View className="items-center pt-12 pb-8 px-6">
+                        <View className="w-16 h-16 bg-white/20 rounded-2xl items-center justify-center mb-4">
+                            <Image source={icons.school} className="w-9 h-9" tintColor="white" resizeMode="contain" />
+                        </View>
+                        <Text className="text-3xl text-white font-JakartaExtraBold">EduRide</Text>
+                        <Text className="text-white/60 font-JakartaMedium mt-1 text-sm">Driver Portal</Text>
+                    </View>
 
-export default SignIn
+                    {/* Form card */}
+                    <View className="flex-1 bg-white rounded-t-3xl px-6 pt-8 pb-10">
+                        <Text className="text-2xl font-JakartaExtraBold text-gray-900">Welcome back</Text>
+                        <Text className="text-gray-400 font-JakartaMedium mt-1 mb-6 text-sm">
+                            Sign in to continue to your dashboard
+                        </Text>
+
+                        <InputField
+                            label="Email Address"
+                            placeholder="Enter your email"
+                            icon={icons.email}
+                            value={form.email}
+                            onChangeText={(value) => setForm({...form, email: value})}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            returnKeyType="next"
+                            onSubmitEditing={() => passwordRef.current?.focus()}
+                        />
+                        <InputField
+                            ref={passwordRef}
+                            label="Password"
+                            placeholder="Enter your password"
+                            icon={icons.lock}
+                            rightIcon={icons.eyecross}
+                            onRightIconPress={() => setShowPassword(p => !p)}
+                            value={form.password}
+                            secureTextEntry={!showPassword}
+                            onChangeText={(value) => setForm({...form, password: value})}
+                            returnKeyType="done"
+                            onSubmitEditing={handleSignIn}
+                        />
+
+                        <CustomButton
+                            title="Sign In"
+                            className="w-full mt-6"
+                            onPress={handleSignIn}
+                            loading={loading}
+                        />
+
+                        <View className="flex-row justify-center mt-6">
+                            <Text className="text-gray-400 font-JakartaMedium text-sm">Don't have an account? </Text>
+                            <Link href="/sign-up">
+                                <Text className="text-[#242b4d] font-JakartaBold text-sm">Sign Up</Text>
+                            </Link>
+                        </View>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
+    );
+};
+
+export default SignIn;

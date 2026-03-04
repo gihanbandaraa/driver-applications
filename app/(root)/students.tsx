@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import { Text, ScrollView, TouchableOpacity, Modal, Image, TextInput, ActivityIndicator} from 'react-native';
-import {SafeAreaView} from "react-native-safe-area-context";
+import { Text, ScrollView, TouchableOpacity, Modal, Image, TextInput, ActivityIndicator, Linking} from 'react-native';
 import {icons} from "@/constants";
 import {router} from "expo-router";
 import InputField from "@/components/InputField";
@@ -18,7 +17,8 @@ if (Platform.OS !== 'web') {
 import * as Location from 'expo-location';
 import {addStudent, getStudents} from "@/api/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {Linking} from 'react-native';
+import {useUser} from "@/context/UserContext";
+import {Ionicons} from '@expo/vector-icons';
 
 interface Student {
     id: number;
@@ -34,11 +34,18 @@ interface Student {
 }
 
 export default function Students() {
+    const {userId} = useUser();
     const [modalVisible, setModalVisible] = useState(false);
     const [mapModalVisible, setMapModalVisible] = useState(false);
     const [currentLocationField, setCurrentLocationField] = useState('');
     const [loading, setLoading] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const [studentData, setStudentData] = useState<Student[]>([]);
+    const filteredStudents = studentData.filter(s =>
+        s.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.grade.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.school.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     const [parentDetails, setParentDetails] = useState({
         fullName: '',
@@ -124,14 +131,10 @@ export default function Students() {
     };
 
     useEffect(() => {
+        if (!userId) return;
         (async () => {
-            const driverId = await AsyncStorage.getItem('userId');
-            if (!driverId) {
-                alert('Driver ID not found');
-                return;
-            }
             try {
-                const response = await getStudents(driverId as string);
+                const response = await getStudents(userId);
                 if (response.ok && response.data) {
                     setStudentData(response.data);
                     await AsyncStorage.setItem('students', JSON.stringify(response.data));
@@ -142,7 +145,7 @@ export default function Students() {
                 alert('Network error');
             }
         })();
-    }, []);
+    }, [userId]);
 
     const handleSubmit = async () => {
         if (!parentDetails.fullName || !parentDetails.email || !parentDetails.phone || !parentDetails.address) {
@@ -154,16 +157,14 @@ export default function Students() {
             return;
         }
 
-        const driverId = await AsyncStorage.getItem('userId');
-        if (!driverId) {
+        if (!userId) {
             alert('Driver ID not found');
             return;
         }
-
         setLoading(true);
         try {
             const response = await addStudent(
-                driverId,
+                userId,
                 parentDetails.fullName,
                 parentDetails.email,
                 parentDetails.phone,
@@ -180,7 +181,7 @@ export default function Students() {
 
             setLoading(false);
             if (response.ok) {
-                const studentsResponse = await getStudents(driverId);
+                const studentsResponse = await getStudents(userId as string);
                 if (studentsResponse.ok && studentsResponse.data) {
                     setStudentData(studentsResponse.data);
                     await AsyncStorage.setItem('students', JSON.stringify(studentsResponse.data));
@@ -212,109 +213,93 @@ export default function Students() {
         }
     };
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <View className="flex-1" style={{backgroundColor: '#f1f5f9'}}>
+            {/* Navy Header */}
+            <View style={{backgroundColor: '#242b4d', paddingTop: 56, paddingBottom: 20, paddingHorizontal: 20}}>
+                <View className="flex-row justify-between items-center">
+                    <View>
+                        <Text className="text-white font-JakartaExtraBold text-2xl">Students</Text>
+                        <Text className="text-white/60 font-JakartaMedium text-sm mt-0.5">{studentData.length} students enrolled</Text>
+                    </View>
+                    <TouchableOpacity
+                        onPress={() => setModalVisible(true)}
+                        style={{backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 14, width: 44, height: 44, alignItems: 'center', justifyContent: 'center'}}
+                    >
+                        <Ionicons name="add" size={24} color="white" />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Search */}
+                <View style={{flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 14, paddingHorizontal: 14, marginTop: 14}}>
+                    <Ionicons name="search-outline" size={18} color="rgba(255,255,255,0.6)" />
+                    <TextInput
+                        style={{flex: 1, paddingVertical: 12, paddingHorizontal: 10, color: 'white', fontFamily: 'Jakarta-Medium', fontSize: 15}}
+                        placeholder="Search students..."
+                        placeholderTextColor="rgba(255,255,255,0.45)"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                    />
+                </View>
+            </View>
+
+            {/* Student List */}
             <ScrollView
-                className="flex-grow"
-                contentContainerStyle={{paddingBottom: 120}}
+                style={{flex: 1, paddingHorizontal: 16, paddingTop: 16}}
+                contentContainerStyle={{paddingBottom: 90}}
                 showsVerticalScrollIndicator={false}
             >
-                <View className="flex justify-center mx-4 mt-6">
-                    {/* Header */}
-                    <View className="flex-row justify-between items-center mb-6">
-                        <TouchableOpacity onPress={() => router.back()}>
-                            <Image
-                                source={icons.back}
-                                className="w-8 h-8 "
-                                tintColor="#242b4d"
-                            />
-                        </TouchableOpacity>
-                        <Text className="text-2xl text-primary-900 font-JakartaBold">Students</Text>
-                        <TouchableOpacity onPress={() => setModalVisible(true)}>
-                            <Image
-                                source={icons.add}
-                                className="w-8 h-8"
-                                tintColor="#242b4d"
-                            />
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Search Bar */}
-                    <View className="bg-gray-100 rounded-xl flex-row items-center px-4 mb-6">
-                        <Image source={icons.search} className="w-5 h-5 mr-2" tintColor="#6B7280"/>
-                        <TextInput
-                            placeholder="Search students..."
-                            className="flex-1 py-3 text-base font-JakartaMedium"
-
-                        />
-                    </View>
-
-                    {/* Student List */}
-                    {studentData.length > 0 ? (
-                        studentData.map((student) => (
-                            <TouchableOpacity
-                                key={student.id}
-                                className="bg-white rounded-2xl p-5 mb-4 shadow-md border border-gray-100"
-                                onPress={() => router.push({
-                                    pathname: '/(root)/student-details',
-                                    params: {studentId: student.id}
-                                })}
-                            >
+                {filteredStudents.length > 0 ? (
+                    filteredStudents.map((student) => (
+                        <TouchableOpacity
+                            key={student.id}
+                            activeOpacity={0.7}
+                            onPress={() => router.push({pathname: '/(root)/student-details', params: {studentId: student.id}})}
+                        >
+                            <View style={{backgroundColor: 'white', borderRadius: 18, padding: 18, marginBottom: 14, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2}}>
                                 <View className="flex-row items-center justify-between">
                                     <View className="flex-row items-center flex-1">
-                                        <View
-                                            className="w-14 h-14 rounded-2xl bg-primary-900/5 items-center justify-center mr-4 border border-primary-900/10">
+                                        <View style={{width: 52, height: 52, borderRadius: 16, backgroundColor: 'rgba(36,43,77,0.07)', alignItems: 'center', justifyContent: 'center', marginRight: 14}}>
                                             <Text className="text-primary-900 font-JakartaBold text-2xl">
                                                 {student.full_name.charAt(0).toUpperCase()}
                                             </Text>
                                         </View>
-                                        <View className="flex-1 mr-4">
-                                            <Text className="text-lg text-gray-900 font-JakartaBold mb-1">
+                                        <View className="flex-1 mr-3">
+                                            <Text className="text-base text-gray-900 font-JakartaBold mb-1">
                                                 {student.full_name}
                                             </Text>
-                                            <View className="flex-row items-center">
-                                                <View className="bg-primary-900/5 px-3 py-1 rounded-full mr-2">
-                                                    <Text className="text-primary-900 font-JakartaMedium text-sm">
+                                            <View className="flex-row items-center flex-wrap gap-1">
+                                                <View style={{backgroundColor: 'rgba(36,43,77,0.07)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3}}>
+                                                    <Text className="text-primary-900 font-JakartaMedium text-xs">
                                                         Grade {student.grade}
                                                     </Text>
                                                 </View>
-                                                <Text className="text-gray-500 font-JakartaMedium text-sm">
+                                                <Text className="text-gray-500 font-JakartaMedium text-xs" numberOfLines={1}>
                                                     {student.school}
                                                 </Text>
                                             </View>
                                         </View>
                                     </View>
                                     <TouchableOpacity
-                                        className="bg-red-50 p-3.5 rounded-xl border border-red-100"
-                                        onPress={() => {
-                                            const phoneNumber = student.phone;
-                                            Linking.openURL(`tel:${phoneNumber}`);
-                                        }}
+                                        style={{backgroundColor: '#fef2f2', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: '#fecaca'}}
+                                        onPress={() => Linking.openURL(`tel:${student.phone}`)}
                                     >
-                                        <Image
-                                            source={icons.phone}
-                                            className="w-5 h-5"
-                                            tintColor="#EF4444"
-                                        />
+                                        <Ionicons name="call-outline" size={18} color="#ef4444" />
                                     </TouchableOpacity>
                                 </View>
-                            </TouchableOpacity>
-                        ))
-                    ) : (
-                        <View className="flex-1 items-center justify-center py-20 ">
-                            <Image
-                                source={icons.noData}
-                                className="w-24 h-24 mb-4 opacity-50"
-                                tintColor="#CCCCCC"
-                            />
-                            <Text className="text-lg font-JakartaBold text-gray-400 mb-2">
-                                No Students Found
-                            </Text>
-                            <Text className="text-sm font-JakartaMedium text-gray-400 text-center max-w-xs mb-6">
-                                Add your first student by tapping the plus button above
-                            </Text>
+                            </View>
+                        </TouchableOpacity>
+                    ))
+                ) : (
+                    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80}}>
+                        <View style={{width: 72, height: 72, borderRadius: 36, backgroundColor: '#e2e8f0', alignItems: 'center', justifyContent: 'center', marginBottom: 16}}>
+                            <Ionicons name="people-outline" size={34} color="#94a3b8" />
                         </View>
-                    )}
-                </View>
+                        <Text className="text-lg font-JakartaBold text-gray-400 mb-2">No Students Found</Text>
+                        <Text className="text-sm font-JakartaMedium text-gray-400 text-center" style={{maxWidth: 240}}>
+                            Add your first student by tapping the + button above
+                        </Text>
+                    </View>
+                )}
             </ScrollView>
 
             {/* Add Student Modal */}
@@ -516,7 +501,7 @@ export default function Students() {
 
 
             </Modal>
-        </SafeAreaView>
+        </View>
     );
 };
 

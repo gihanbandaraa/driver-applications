@@ -60,6 +60,7 @@ declare interface ButtonProps extends TouchableOpacityProps {
   IconLeft?: React.ComponentType<any>;
   IconRight?: React.ComponentType<any>;
   className?: string;
+  loading?: boolean;
 }
 
 declare interface GoogleInputProps {
@@ -81,13 +82,15 @@ declare interface GoogleInputProps {
 declare interface InputFieldProps extends TextInputProps {
   label: string;
   icon?: any;
+  rightIcon?: any;
+  onRightIconPress?: () => void;
   secureTextEntry?: boolean;
   labelStyle?: string;
   containerStyle?: string;
   inputStyle?: string;
   iconStyle?: string;
   className?: string;
-  type?: "default" | "numeric" | "email-address" | "phone-pad" ;
+  type?: "default" | "numeric" | "email-address" | "phone-pad";
 }
 
 declare interface PaymentProps {
