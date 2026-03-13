@@ -53,7 +53,7 @@ const SignUp = () => {
                     <View className="flex-1 bg-white rounded-t-3xl px-6 pt-8 pb-10">
                         <Text className="text-2xl font-JakartaExtraBold text-gray-900">Create account</Text>
                         <Text className="text-gray-400 font-JakartaMedium mt-1 mb-6 text-sm">
-                            Join EduRide as a driver today
+                            Join EduRide as a driver today's
                         </Text>
 
                         <InputField
